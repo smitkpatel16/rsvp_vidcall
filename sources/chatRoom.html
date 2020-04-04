@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="Trial of a vid chat app.">
+    <meta name="author" content="Smit Patel">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta itemprop="name" content="RSVP">
+    <meta itemprop="image" content="/sources/images/icons/icon192.png">
+    <meta id="theme-color" name="theme-color" content="#fff">
+    <link rel="icon" href={{ static_url("images/icons/icon192.png") }}>
+    <base target="_blank">
+    <title>RSVP VidChat</title>
+    <style>
+      h1 {
+        margin: 0 0 24px 0;
+      }
+      select {
+        width: 150px;
+      }
+      video {
+        margin: 10px 0 0 0;
+      }
+      .footer {
+        position: fixed;
+        left: 5%;
+        bottom: 0;
+        width: 90%;
+        text-align: center;
+      }
+    </style>
+    <link rel="stylesheet" href={{ static_url("css/bootstrap.min.css") }}>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>        
+    <script src={{ static_url("js/jquery.min.js") }}></script>
+    <script src={{ static_url("js/popper.min.js") }}></script>
+    <script src={{ static_url("js/bootstrap.min.js") }}></script>
+    <script src = {{ static_url("js/chatroom.js") }}> </script>
+  </head>
+  <body>
+    <div class="text-center">
+      <h1><a href="/" title="Home Page">Home</a></h1>
+      <p>RSVP Conferencing!</p> 
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-3">
+          <label for="personName">Name:</label>
+          <input name="personName" id="personName" type="text" label="Name: " value="" size=20/>
+        </div>
+        <div class="col-sm-6">          
+          <label for="personName">Chat ID:</label>        
+          <input name="chatID" id="chatID" type="text" label="Chat ID: " value="" size=20/>
+        </div>
+        <div class="col-sm-3">
+          <button type="button" class="btn btn-info" onclick="joinChat();">Join</button>
+          <button type="button" class="btn btn-info" onclick="chatCollapse();">Chat Collapse</button>          
+        </div>
+      </div>
+    <div class="row">
+      <div class="col-sm-6 select">      
+          <label for="audioSource">Audio:</label><select id="audioSource"></select>
+          <label for="videoSource">Video:</label><select id="videoSource"></select>
+      </div>
+      <div class="col-sm-3">
+        <div>Online:&nbsp;</div>
+        <div id="peopleInChat"></div>
+      </div>
+      <div class="col-sm-3">
+        <button type="button" class="btn btn-info" onclick="joinAVI();">Start AV</button>          
+        <button type="button" class="btn btn-info" onclick="stopAVI();">Stop AV</button>                              
+      </div>
+    </div>
+    <div class=".col-sm-4">
+      <div id="chatMessages" style="height: 50vh; overflow-y: scroll; border: 1px solid #333333;">
+    </div>
+    <div class=".col-sm-8" id="avi" style="1px solid #333333;">
+      <video autoplay id="local"></video>
+    </div>    
+    <div class="footer">
+      <div class="row">
+        <textarea style="width: 80%;" id="textMessage" disabled></textarea>
+        <input type="button" id="sendMessage" style="width: 20%;" onclick="sendMessage()" value="Send" disabled/>      
+      </div>
+    </div>
+  </body>
+</html>

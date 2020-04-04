@@ -1,0 +1,4 @@
+.vscode/settings.json
+junk/*
+certs/*
+__pycache__/*
