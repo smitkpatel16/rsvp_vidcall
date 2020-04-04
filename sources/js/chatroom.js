@@ -261,6 +261,7 @@ function receiveOffer(peerOffer) {
   if (!(peerId in peers)){  
     peers[peerId] = new PeerConnection(peerConnectionConfig);
     peers[peerId].peerId = peerId;    
+    peers[peerId].onicecandidate = iceCandidateNeg;          
     var aviDiv = document.getElementById("avi");    
     var vidElement = document.createElement("video");
     vidElement.setAttribute("id",peerId);
