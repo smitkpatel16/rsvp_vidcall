@@ -12,15 +12,6 @@
     <base target="_blank">
     <title>RSVP VidChat</title>
     <style>
-      h1 {
-        margin: 0 0 24px 0;
-      }
-      select {
-        width: 150px;
-      }
-      video {
-        margin: 10px 0 0 0;
-      }
       .footer {
         position: fixed;
         left: 5%;
@@ -42,42 +33,42 @@
       <p>RSVP Conferencing!</p> 
     </div>
     <div class="container">
-      <div class="row">
-        <div class="col-sm-3">
+      <div class="row row-cols-3">
+        <div class="col">
           <label for="personName">Name:</label>
           <input name="personName" id="personName" type="text" label="Name: " value="" size=20/>
         </div>
-        <div class="col-sm-6">          
+        <div class="col">          
           <label for="personName">Chat ID:</label>        
           <input name="chatID" id="chatID" type="text" label="Chat ID: " value="" size=20/>
         </div>
-        <div class="col-sm-3">
+        <div class="col">
           <button type="button" class="btn btn-info" onclick="joinChat();">Join</button>
           <button type="button" class="btn btn-info" onclick="chatCollapse();">Chat Collapse</button>          
         </div>
       </div>
-    <div class="row">
-      <div class="col-sm-6 select">      
+    <div class="row row-cols-3">
+      <div class="col">      
           <label for="audioSource">Audio:</label><select id="audioSource"></select>
           <label for="videoSource">Video:</label><select id="videoSource"></select>
       </div>
-      <div class="col-sm-3">
+      <div class="col">
         <div>Online:&nbsp;</div>
         <div id="peopleInChat"></div>
       </div>
-      <div class="col-sm-3">
+      <div class="col">
         <button type="button" class="btn btn-info" onclick="joinAVI();">Start AV</button>          
         <button type="button" class="btn btn-info" onclick="stopAVI();">Stop AV</button>                              
       </div>
     </div>
-    <div class="row">
-    <div class=".col-sm-4">
+
+    <div class="row row-cols-1">
       <div id="chatMessages" style="height: 50vh; overflow-y: scroll; border: 1px solid #333333;"></div>
     </div>
-    <div class=".col-sm-8" id="avi" style="1px solid #333333;">
+    <div class="row row-cols-1" id="avi" style="1px solid #333333;">
       <video autoplay id="local" muted></video>
     </div>    
-    </div>
+
     <div class="footer">
       <div class="row">
         <textarea style="width: 80%;" id="textMessage" disabled></textarea>

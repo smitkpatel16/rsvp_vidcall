@@ -131,7 +131,8 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                                             'people': people,
                                             'messageType':'init'})
                     connection.write_message({'peerId': self._id,
-                                            'messageType':'remove'})
+                                            'messageType':'remove',
+                                            'count': count})
 
 #|--------------------------End of on_close------------------------------------|
 

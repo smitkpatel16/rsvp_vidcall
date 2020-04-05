@@ -191,6 +191,16 @@ function handleConference(messageStream){
   } 
   if(dataObj['messageType']=='init')
   {
+    var aviDiv = document.getElementById("avi");      
+    if(dataObj["count"]>2){
+      aviDiv.className = "row row-cols-2";
+      if(dataObj["count"]>4){
+        aviDiv.className = "row row-cols-3";
+      }
+    }
+    else{
+      aviDiv.className = "row row-cols-1";
+    }    
     var el = document.getElementById("peopleInChat");
     el.innerHTML = dataObj['people'];
     personID = dataObj['id'];
@@ -202,6 +212,15 @@ function handleConference(messageStream){
       var element = document.getElementById(dataObj['peerId']);
       element.parentNode.removeChild(element);      
     }
+    if(dataObj["count"]>2){
+      aviDiv.className = "row row-cols-2";
+      if(dataObj["count"]>4){
+        aviDiv.className = "row row-cols-3";
+      }
+    }
+    else{
+      aviDiv.className = "row row-cols-1";
+    }    
   }
   if(dataObj['messageType']=='offer'){
     receiveOffer(dataObj);
@@ -231,6 +250,7 @@ function createOffer(peerId) {
       peers[peerId].onnegotiationneeded = negotiate;      
       var vidElement = document.createElement("video");
       vidElement.setAttribute("id",peerId);
+      videoElement.className="col";
       var aviDiv = document.getElementById("avi");      
       aviDiv.appendChild(vidElement);
       vidElement.autoplay = true;
@@ -282,6 +302,7 @@ function receiveOffer(peerOffer) {
     peers[peerId].onnegotiationneeded = negotiate;            
     var aviDiv = document.getElementById("avi");    
     var vidElement = document.createElement("video");
+    videoElement.className="col";
     vidElement.setAttribute("id",peerId);
     aviDiv.appendChild(vidElement);
     vidElement.autoplay = true;
