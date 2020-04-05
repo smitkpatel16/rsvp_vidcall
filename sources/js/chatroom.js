@@ -47,6 +47,7 @@ function joinChat(){
     }
     window.history.pushState("", "", location.protocol + '//' + location.host + location.pathname+"?id="+chatId);
     var wsURL = "wss://"+window.location.host+"/chatsocket";
+    console.log(window.location.host);
     chatSocket = new WebSocket(wsURL);
     chatSocket.onopen = function (evt) { onOpen(evt) };
     chatSocket.onclose = function (evt) { onClose(evt) };
@@ -100,6 +101,7 @@ function onOpen(evt){
   // videoSelect.onchange = getStream;
   // getStream().then(getDevices).then(gotDevices);
   getDevices().then(gotDevices);
+  joinAVI();  
 }
 function joinAVI(){
   videoElement = document.getElementById('local');  
@@ -136,9 +138,7 @@ function gotStream(stream) {
   videoElement.srcObject = stream;
   for (var peerId in peers){
     if (localStream) {
-      localStream.getTracks().forEach(track => {
-        peers[peerId].addTrack(track);
-      });
+        peers[peerId].addStream(localStream);
     }
   }
 }
@@ -199,6 +199,8 @@ function handleConference(messageStream){
   if(dataObj['messageType']=='remove'){
     if (dataObj['peerId'] in peers){
       delete peers[dataObj['peerId']];
+      var element = document.getElementById(dataObj['peerId']);
+      element.parentNode.removeChild(element);      
     }
   }
   if(dataObj['messageType']=='offer'){
@@ -225,7 +227,16 @@ function createOffer(peerId) {
     if (!(peerId in peers)){
       peers[peerId] = new PeerConnection(peerConnectionConfig);
       peers[peerId].peerId = peerId;
-      peers[peerId].onicecandidate = iceCandidateNeg;      
+      peers[peerId].onicecandidate = iceCandidateNeg;
+      peers[peerId].onnegotiationneeded = negotiate;      
+      var vidElement = document.createElement("video");
+      vidElement.setAttribute("id",peerId);
+      var aviDiv = document.getElementById("avi");      
+      aviDiv.appendChild(vidElement);
+      vidElement.autoplay = true;
+      peers[peerId].onaddstream = function(event) {
+        $('#'+peerId).attachStream(event);
+      }            
     }
     peers[peerId].createOffer(function(offer) {
         peers[peerId].setLocalDescription(offer, function() {
@@ -247,7 +258,7 @@ function iceCandidateNeg(event){
     var peerId = event.target.peerId;
     var obj = {};
     obj["messageType"]="ice";
-    obj["ice"]=event.candidate;                  
+    obj["ice"]=event;                  
     obj['chatID']=chatId;
     obj["peerId"]=peerId;          
     chatSocket.send(JSON.stringify(obj));
@@ -256,7 +267,9 @@ function iceCandidateNeg(event){
   if(event && event.peerId){
     var peerId = event.peerId;
     var peerConnection = peers[peerId];
-    peerConnection.addIceCandidate(new IceCandidate(event.ice));
+    if(event.ice.candidate){
+      peerConnection.addIceCandidate(new IceCandidate(event.ice));
+    }
   }
 }
 function receiveOffer(peerOffer) {
@@ -265,14 +278,15 @@ function receiveOffer(peerOffer) {
   if (!(peerId in peers)){  
     peers[peerId] = new PeerConnection(peerConnectionConfig);
     peers[peerId].peerId = peerId;    
-    peers[peerId].onicecandidate = iceCandidateNeg;          
+    peers[peerId].onicecandidate = iceCandidateNeg;        
+    peers[peerId].onnegotiationneeded = negotiate;            
     var aviDiv = document.getElementById("avi");    
     var vidElement = document.createElement("video");
     vidElement.setAttribute("id",peerId);
     aviDiv.appendChild(vidElement);
     vidElement.autoplay = true;
-    peers[peerId].ontrack = function(event) {
-      $('#'+peerId).attachStream(event.stream);
+    peers[peerId].onaddstream = function(event) {
+      $('#'+peerId).attachStream(event);
     };
   }    
   peers[peerId].setRemoteDescription(new SessionDescription(offer), function() {
@@ -292,16 +306,7 @@ function receiveOffer(peerOffer) {
 function receiveAnswer(peerAnswer) {
   var peerId = peerAnswer['peerId'];
   var answer = peerAnswer['answer']; 
-  var vidElement = document.createElement("video");
-  vidElement.setAttribute("id",peerId);
-  var aviDiv = document.getElementById("avi");      
-  aviDiv.appendChild(vidElement);
-  vidElement.autoplay = true;
-  peers[peerId].ontrack = function(event) {
-    $('#'+peerId).attachStream(event.stream);
-  }
   peers[peerId].setRemoteDescription(new SessionDescription(answer));
-  peers[peerId].onnegotiationneeded = negotiate;
 }
 async function negotiate(event){
   console.log("Negotiate");
@@ -339,10 +344,10 @@ async function negotiate(event){
   }
 }
 
-jQuery.fn.attachStream = function(stream) {
+jQuery.fn.attachStream = function(event) {
   this.each(function() {
-      console.log(stream);
-      this.srcObject = stream;
+    console.log(event);
+      this.srcObject = event.stream;
       // this.play();
   });
 }
