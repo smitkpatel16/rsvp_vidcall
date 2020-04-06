@@ -58,9 +58,6 @@
             <li class="nav-item active">
               <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#">Link</a>
-            </li>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
                 aria-haspopup="true" aria-expanded="false">
@@ -78,8 +75,11 @@
 
       <div class="container-fluid">
         <div class="row row-cols-1" id="avi" style="1px solid #333333;">
-          <video autoplay id="local" muted class="col"></video>
         </div>
+        <div class="row row-cols-1" style="1px solid #333333;">
+          <div class="col" id="localDiv"> <video autoplay id="local" muted width="320"></video></div>
+        </div>
+
       </div>
     </div>
     <!-- /#page-content-wrapper -->

@@ -245,12 +245,15 @@ function createOffer(peerId) {
       peers[peerId].peerId = peerId;
       peers[peerId].onicecandidate = iceCandidateNeg;
       peers[peerId].onnegotiationneeded = negotiate;
+      var div = document.createElement("div");
       var vidElement = document.createElement("video");
       vidElement.setAttribute("id", peerId);
-      videoElement.className = "col";
+      div.className = "col";
       var aviDiv = document.getElementById("avi");
-      aviDiv.appendChild(vidElement);
+      div.appendChild(vidElement);
+      aviDiv.appendChild(div);
       vidElement.autoplay = true;
+      vidElement.width = 420;
       peers[peerId].onaddstream = function (event) {
         $('#' + peerId).attachStream(event);
       }
@@ -297,12 +300,15 @@ function receiveOffer(peerOffer) {
     peers[peerId].peerId = peerId;
     peers[peerId].onicecandidate = iceCandidateNeg;
     peers[peerId].onnegotiationneeded = negotiate;
-    var aviDiv = document.getElementById("avi");
+    var div = document.createElement("div");
     var vidElement = document.createElement("video");
-    videoElement.className = "col";
     vidElement.setAttribute("id", peerId);
-    aviDiv.appendChild(vidElement);
+    div.className = "col";
+    var aviDiv = document.getElementById("avi");
+    div.appendChild(vidElement);
+    aviDiv.appendChild(div);
     vidElement.autoplay = true;
+    vidElement.width = 420;
     peers[peerId].onaddstream = function (event) {
       $('#' + peerId).attachStream(event);
     };
