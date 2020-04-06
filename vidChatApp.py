@@ -145,5 +145,5 @@ class Chat(tornado.web.RequestHandler):
 # get :- Override default get method
 #|-----------------------------------------------------------------------------|
     def get(self):
-        self.render("sources/chatRoom.html")
+        self.render("sources/chatRoom2.html")
 #|--------------------------End of get-----------------------------------------| 

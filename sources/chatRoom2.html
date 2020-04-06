@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Simple Sidebar - Start Bootstrap Template</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href={{ static_url("vendor/bootstrap/css/bootstrap.min.css") }} rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <!-- Custom styles for this template -->
+  <link href={{ static_url("css/simple-sidebar.css") }} rel="stylesheet">
+  <script src={{ static_url("js/chatroom.js") }}> </script>
+</head>
+
+<body>
+
+  <div class="d-flex" id="wrapper">
+
+    <!-- Sidebar -->
+    <div class="bg-light border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading">RSVP Chat </div>
+      <div class="list-group list-group-flush">
+        <label for="audioSource">Audio:</label><select id="audioSource"></select>
+        <label for="videoSource">Video:</label><select id="videoSource"></select>
+        <button class="btn btn-primary" onclick="joinAVI();">Start AV</button>
+        <button class="btn btn-primary">Stop AV</button>
+        <div id="peopleInChat"></div>
+      </div>
+    </div>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <button class="btn btn-primary" id="menu-toggle">Toggle Menu</button>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <label for="personName">&nbsp;Name:</label>
+          <input name="personName" id="personName" type="text" label="Name: " value="" size=20 />
+          <label for="personName">&nbsp;Chat ID:</label>
+          <input name="chatID" id="chatID" type="text" label="Chat ID: " value="" size=20 />
+          <button class="btn btn-primary">&nbsp;&nbsp;Join</button>
+
+          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                Chat
+              </a>
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                <div id="chatMessages" style="height: 50vh; overflow-y: auto; border: 1px solid #333333;"></div>
+                <textarea id="textMessage" disabled></textarea>
+                <input type="button" id="sendMessage" onclick="sendMessage()" value="Send" disabled />
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+        <div class="row row-cols-1" id="avi" style="1px solid #333333;">
+          <video autoplay id="local" muted class="col"></video>
+        </div>
+      </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+  </div>
+  <!-- /#wrapper -->
+
+  <!-- Bootstrap core JavaScript -->
+  <script src={{ static_url("vendor/jquery/jquery.min.js") }}>
+  </script>
+  <script src={{ static_url("vendor/bootstrap/js/bootstrap.bundle.min.js") }}></script>
+
+  <!-- Menu Toggle Script -->
+  <script>
+    $("#menu-toggle").click(function (e) {
+      e.preventDefault();
+      $("#wrapper").toggleClass("toggled");
+    });
+  </script>
+
+</body>
+
+</html>
