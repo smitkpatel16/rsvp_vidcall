@@ -8,7 +8,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>Simple Sidebar - Start Bootstrap Template</title>
+  <title>RSVP Vidchat</title>
 
   <!-- Bootstrap core CSS -->
   <link href={{ static_url("vendor/bootstrap/css/bootstrap.min.css") }} rel="stylesheet">
@@ -29,7 +29,7 @@
         <label for="audioSource">Audio:</label><select id="audioSource"></select>
         <label for="videoSource">Video:</label><select id="videoSource"></select>
         <button class="btn btn-primary" onclick="joinAVI();">Start AV</button>
-        <button class="btn btn-primary">Stop AV</button>
+        <button class="btn btn-primary" onclick="stopAVI();">Stop AV</button>
         <div id="peopleInChat"></div>
       </div>
     </div>
@@ -52,7 +52,7 @@
           <input name="personName" id="personName" type="text" label="Name: " value="" size=20 />
           <label for="personName">&nbsp;Chat ID:</label>
           <input name="chatID" id="chatID" type="text" label="Chat ID: " value="" size=20 />
-          <button class="btn btn-primary">&nbsp;&nbsp;Join</button>
+          <button class="btn btn-primary" onclick="joinChat();">&nbsp;&nbsp;Join</button>
 
           <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
             <li class="nav-item active">
@@ -87,8 +87,6 @@
   <!-- /#wrapper -->
 
   <!-- Bootstrap core JavaScript -->
-  <script src={{ static_url("vendor/jquery/jquery.min.js") }}>
-  </script>
   <script src={{ static_url("vendor/bootstrap/js/bootstrap.bundle.min.js") }}></script>
 
   <!-- Menu Toggle Script -->
