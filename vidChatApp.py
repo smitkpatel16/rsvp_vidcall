@@ -113,6 +113,8 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
         for chatID, connectionBlock in self._ROOMCONNECTIONS.items():
             if self in connectionBlock:
                 self._ROOMCONNECTIONS[chatID].remove(self)
+                logger.info("{} left {}".format(
+                    self._name, chatID))
                 count = len(self._ROOMCONNECTIONS[chatID])
                 people = [c._name for c in self._ROOMCONNECTIONS[chatID]]
                 for connection in self._ROOMCONNECTIONS[chatID]:
