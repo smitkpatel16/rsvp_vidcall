@@ -94,6 +94,8 @@ function onOpen(evt) {
   el.removeAttribute("disabled");
   el = document.getElementById("sendMessage");
   el.removeAttribute("disabled");
+  el = document.getElementById("mute");
+  el.removeAttribute("disabled");
   audioSelect = document.querySelector('select#audioSource');
   videoSelect = document.querySelector('select#videoSource');
   // audioSelect.onchange = getStream;
@@ -127,7 +129,19 @@ function getStream() {
   };
   return navigator.mediaDevices.getUserMedia(constraints);
 }
-
+function updateUnreadCount() {
+  var str = document.getElementById("chatDorp");
+  if (!str.className.includes("show")) {
+    var badge = document.getElementById("badge");
+    var badgeCount = parseInt(badge.innerHTML);
+    badgeCount = badgeCount + 1;
+    badge.innerHTML = badgeCount;
+  }
+}
+function removeUnreadCount() {
+  var badge = document.getElementById("badge");
+  badge.innerHTML = 0;
+}
 function gotStream(stream) {
   localStream = stream; // make stream available to console
   audioSelect.selectedIndex = [...audioSelect.options].
@@ -186,10 +200,11 @@ function handleConference(messageStream) {
     div.append(pre);
     txtBlock.append(div);
     txtBlock.scrollTop = txtBlock.scrollHeight;
+    updateUnreadCount();
   }
   if (dataObj['messageType'] == 'init') {
     var aviDiv = document.getElementById("avi");
-    if (dataObj["count"] >= 2) {
+    if (dataObj["count"] > 2) {
       aviDiv.className = "row row-cols-2";
       if (dataObj["count"] > 4) {
         aviDiv.className = "row row-cols-3";
@@ -209,7 +224,7 @@ function handleConference(messageStream) {
       var element = document.getElementById(dataObj['peerId']);
       element.parentNode.removeChild(element);
     }
-    if (dataObj["count"] >= 2) {
+    if (dataObj["count"] > 2) {
       aviDiv.className = "row row-cols-2";
       if (dataObj["count"] > 4) {
         aviDiv.className = "row row-cols-3";
@@ -322,6 +337,7 @@ function receiveOffer(peerOffer) {
         obj["peerId"] = peerId;
         obj['chatID'] = chatId;
         chatSocket.send(JSON.stringify(obj));
+        joinAVI();
       }, fail);
     }, fail);
   }, fail);
@@ -331,7 +347,27 @@ function receiveAnswer(peerAnswer) {
   var peerId = peerAnswer['peerId'];
   var answer = peerAnswer['answer'];
   peers[peerId].setRemoteDescription(new SessionDescription(answer));
+  joinAVI();
 }
+
+function muteMe() {
+  if (localStream) {
+    localStream.getAudioTracks().forEach(track => {
+      track.stop();
+    });
+  }
+  var el = document.getElementById("mute");
+  el.onclick = unMuteMe;
+  el.innerHTML = "Un Mute";
+}
+
+function unMuteMe() {
+  getStream().then(gotStream);
+  var el = document.getElementById("mute");
+  el.onclick = unMuteMe;
+  el.innerHTML = "Mute";
+}
+
 async function negotiate(event) {
   console.log("Negotiate");
   console.log(event);

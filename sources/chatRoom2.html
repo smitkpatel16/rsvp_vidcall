@@ -30,6 +30,7 @@
         <label for="videoSource">Video:</label><select id="videoSource"></select>
         <button class="btn btn-primary" onclick="joinAVI();">Start AV</button>
         <button class="btn btn-primary" onclick="stopAVI();">Stop AV</button>
+        <button class="btn btn-primary" onclick="muteMe();" id="mute" disabled>Mute</button>
         <div id="peopleInChat"></div>
       </div>
     </div>
@@ -59,11 +60,12 @@
               <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="false">
+              <a class="nav-link dropdown-toggle notification" href="#" id="navbarDropdown" role="button"
+                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="removeUnreadCount();">
                 Chat
+                <span class="badge" id="badge">0</span>
               </a>
-              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown" id="chatDorp">
                 <div id="chatMessages" style="height: 50vh; overflow-y: auto; border: 1px solid #333333;"></div>
                 <textarea id="textMessage" disabled></textarea>
                 <input type="button" id="sendMessage" onclick="sendMessage()" value="Send" disabled />

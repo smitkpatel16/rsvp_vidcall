@@ -15,7 +15,15 @@ body {
   -o-transition: margin .25s ease-out;
   transition: margin .25s ease-out;
 }
-
+.notification .badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  padding: 5px 10px;
+  border-radius: 50%;
+  background-color: red;
+  color: white;
+}
 #sidebar-wrapper .sidebar-heading {
   padding: 0.875rem 1.25rem;
   font-size: 1.2rem;
