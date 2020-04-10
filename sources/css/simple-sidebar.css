@@ -55,3 +55,7 @@ body {
     margin-left: -15rem;
   }
 }
+video {
+  max-width: 100%;
+  width: 320px;
+}

@@ -216,7 +216,9 @@ function handleConference(messageStream) {
     var el = document.getElementById("peopleInChat");
     el.innerHTML = dataObj['people'];
     personID = dataObj['id'];
-    createOffer(dataObj['peers'][dataObj['peers'].length - 1]);
+    if (dataObj['peers']) {
+      createOffer(dataObj['peers'][dataObj['peers'].length - 1]);
+    }
   }
   if (dataObj['messageType'] == 'remove') {
     if (dataObj['peerId'] in peers) {
@@ -231,7 +233,9 @@ function handleConference(messageStream) {
       }
     }
     else {
-      aviDiv.className = "row row-cols-1";
+      if (aviDiv) {
+        aviDiv.className = "row row-cols-1";
+      }
     }
   }
   if (dataObj['messageType'] == 'offer') {
@@ -253,25 +257,33 @@ function closeChat() {
 function fail() {
   console.log("Failed");
 }
+
+function addPeerVid(peerId) {
+  var div = document.createElement("div");
+  var vidElement = document.createElement("video");
+  vidElement.setAttribute("id", peerId);
+  div.className = "col";
+  var aviDiv = document.getElementById("avi");
+  div.appendChild(vidElement);
+  aviDiv.appendChild(div);
+  vidElement.autoplay = true;
+}
+
+function newPeerConnection(peerId) {
+  peers[peerId] = new PeerConnection(peerConnectionConfig);
+  addPeerVid(peerId);
+  peers[peerId].peerId = peerId;
+  peers[peerId].onnegotiationneeded = negotiate;
+  peers[peerId].onicecandidate = iceCandidateNeg;
+  peers[peerId].onaddstream = function (event) {
+    $('#' + peerId).attachStream(event);
+  }
+}
+
 function createOffer(peerId) {
   if (peerId != personID) {
     if (!(peerId in peers)) {
-      peers[peerId] = new PeerConnection(peerConnectionConfig);
-      peers[peerId].peerId = peerId;
-      peers[peerId].onicecandidate = iceCandidateNeg;
-      peers[peerId].onnegotiationneeded = negotiate;
-      var div = document.createElement("div");
-      var vidElement = document.createElement("video");
-      vidElement.setAttribute("id", peerId);
-      div.className = "col";
-      var aviDiv = document.getElementById("avi");
-      div.appendChild(vidElement);
-      aviDiv.appendChild(div);
-      vidElement.autoplay = true;
-      vidElement.width = 420;
-      peers[peerId].onaddstream = function (event) {
-        $('#' + peerId).attachStream(event);
-      }
+      newPeerConnection(peerId);
     }
     peers[peerId].createOffer(function (offer) {
       peers[peerId].setLocalDescription(offer, function () {
@@ -285,9 +297,8 @@ function createOffer(peerId) {
     }, fail);
   }
 }
+
 function iceCandidateNeg(event) {
-  console.log("Ice");
-  console.log(event);
   if (event.candidate) {
     if (event.target) {
       var peerId = event.target.peerId;
@@ -307,34 +318,19 @@ function iceCandidateNeg(event) {
     }
   }
 }
+
 function receiveOffer(peerOffer) {
-  var peerId = peerOffer['peerId'];
-  var offer = peerOffer['offer'];
-  if (!(peerId in peers)) {
-    peers[peerId] = new PeerConnection(peerConnectionConfig);
-    peers[peerId].peerId = peerId;
-    peers[peerId].onicecandidate = iceCandidateNeg;
-    peers[peerId].onnegotiationneeded = negotiate;
-    var div = document.createElement("div");
-    var vidElement = document.createElement("video");
-    vidElement.setAttribute("id", peerId);
-    div.className = "col";
-    var aviDiv = document.getElementById("avi");
-    div.appendChild(vidElement);
-    aviDiv.appendChild(div);
-    vidElement.autoplay = true;
-    vidElement.width = 420;
-    peers[peerId].onaddstream = function (event) {
-      $('#' + peerId).attachStream(event);
-    };
+  if (!(peerOffer['peerId'] in peers)) {
+    newPeerConnection(peerOffer['peerId']);
+    peerOffer['offer'] = new SessionDescription(peerOffer['offer']);
   }
-  peers[peerId].setRemoteDescription(new SessionDescription(offer), function () {
-    peers[peerId].createAnswer(function (answer) {
-      peers[peerId].setLocalDescription(answer, function () {
+  peers[peerOffer['peerId']].setRemoteDescription(peerOffer['offer'], function () {
+    peers[peerOffer['peerId']].createAnswer(function (answer) {
+      peers[peerOffer['peerId']].setLocalDescription(new SessionDescription(answer), function () {
         var obj = {};
         obj["messageType"] = "response";
         obj["answer"] = answer;
-        obj["peerId"] = peerId;
+        obj["peerId"] = peerOffer['peerId'];
         obj['chatID'] = chatId;
         chatSocket.send(JSON.stringify(obj));
         joinAVI();
@@ -344,9 +340,7 @@ function receiveOffer(peerOffer) {
 }
 
 function receiveAnswer(peerAnswer) {
-  var peerId = peerAnswer['peerId'];
-  var answer = peerAnswer['answer'];
-  peers[peerId].setRemoteDescription(new SessionDescription(answer));
+  peers[peerAnswer['peerId']].setRemoteDescription(new SessionDescription(peerAnswer['answer']));
   joinAVI();
 }
 
@@ -372,35 +366,29 @@ async function negotiate(event) {
   console.log("Negotiate");
   console.log(event);
   if (event.target) {
-    var peerId = event.target.peerId;
-    var peerConnection = peers[peerId];
+    var peerConnection = peers[event.target.peerId];
     const offer = await peerConnection.createOffer();
-    if (peerConnection.signalingState != "stable") return;
     await peerConnection.setLocalDescription(offer);
     var obj = {}
-    obj['peerId'] = peerId;
+    obj['peerId'] = event.target.peerId;
     obj['messageType'] = "negotiate";
     obj['chatID'] = chatId;
     obj["offer"] = offer;
     chatSocket.send(JSON.stringify(obj));
   }
   if (event.offer) {
-    var peerId = event.peerId;
-    var peerConnection = peers[peerId];
-    await peerConnection.setRemoteDescription(event.offer);
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription()
+    await peers[event.peerId].setRemoteDescription(event.offer);
+    const answer = await peers[event.peerId].createAnswer();
+    await peers[event.peerId].setLocalDescription(answer);
     var obj = {}
-    obj['peerId'] = peerId;
+    obj['peerId'] = event.peerId;
     obj['messageType'] = "negotiate";
     obj['chatID'] = chatId;
     obj["answer"] = answer;
     chatSocket.send(JSON.stringify(obj));
   }
   if (event.answer) {
-    var peerId = event.peerId;
-    var peerConnection = peers[peerId];
-    await peerConnection.setRemoteDescription(event.answer);
+    await peers[event.peerId].setRemoteDescription(event.answer);
   }
 }
 
