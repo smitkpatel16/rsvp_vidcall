@@ -7,6 +7,7 @@ var videoElement = null;
 var localStream = null;
 var personID = null;
 var peers = {};
+var inboundStreams = {};
 var peerConnectionConfig = { 'iceServers': [{ 'url': 'stun:stun.services.mozilla.com' }, { 'url': 'stun:stun.l.google.com:19302' }] };
 var PeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
 var IceCandidate = window.RTCIceCandidate || window.RTCIceCandidate;
@@ -150,9 +151,7 @@ function gotStream(stream) {
     findIndex(option => option.text === stream.getVideoTracks()[0].label);
   videoElement.srcObject = stream;
   for (var peerId in peers) {
-    if (localStream) {
-      peers[peerId].addStream(localStream);
-    }
+    stream.getTracks().forEach(track => { peers[peerId].addTrack(track) });
   }
 }
 
@@ -275,8 +274,8 @@ function newPeerConnection(peerId) {
   peers[peerId].peerId = peerId;
   peers[peerId].onnegotiationneeded = negotiate;
   peers[peerId].onicecandidate = iceCandidateNeg;
-  peers[peerId].onaddstream = function (event) {
-    $('#' + peerId).attachStream(event);
+  peers[peerId].ontrack = function (event) {
+    $('#' + peerId).attachTrack(event);
   }
 }
 
@@ -392,11 +391,17 @@ async function negotiate(event) {
   }
 }
 
-jQuery.fn.attachStream = function (event) {
+jQuery.fn.attachTrack = function (ev) {
   this.each(function () {
-    console.log(event);
-    this.srcObject = event.stream;
-    // this.play();
+    if (ev.streams && ev.streams[0]) {
+      this.srcObject = ev.streams[0];
+    } else {
+      if (!inboundStreams[this.id]) {
+        inboundStreams[this.id] = new MediaStream();
+        this.srcObject = inboundStreams[this.id];
+      }
+      inboundStreams[this.id].addTrack(ev.track);
+    }
   });
 }
 window.addEventListener("load", getChatID, false);
