@@ -8,7 +8,7 @@ var localStream = null;
 var personID = null;
 var peers = {};
 var inboundStreams = {};
-var peerConnectionConfig = { 'iceServers': [{ 'url': 'stun:stun.services.mozilla.com' }, { 'url': 'stun:stun.l.google.com:19302' }] };
+var peerConnectionConfig = { 'iceServers': [{ 'url': 'stun:stun.services.mozilla.com' }, { 'url': 'stun:stun.l.google.com:19302' }, { "urls": "turn:15.206.150.7:3478", "username": "test", "credential": "test123" }] };
 var PeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
 var IceCandidate = window.RTCIceCandidate || window.RTCIceCandidate;
 var SessionDescription = window.RTCSessionDescription || window.RTCSessionDescription;
@@ -202,21 +202,11 @@ function handleConference(messageStream) {
     updateUnreadCount();
   }
   if (dataObj['messageType'] == 'init') {
-    var aviDiv = document.getElementById("avi");
-    if (dataObj["count"] > 2) {
-      aviDiv.className = "row row-cols-2";
-      if (dataObj["count"] > 4) {
-        aviDiv.className = "row row-cols-3";
-      }
-    }
-    else {
-      aviDiv.className = "row row-cols-1";
-    }
     var el = document.getElementById("peopleInChat");
     el.innerHTML = dataObj['people'];
     personID = dataObj['id'];
-    if (dataObj['peers']) {
-      createOffer(dataObj['peers'][dataObj['peers'].length - 1]);
+    if (dataObj['lastPeer']) {
+      createPeerOffer(dataObj['lastPeer']);
     }
   }
   if (dataObj['messageType'] == 'remove') {
@@ -224,17 +214,8 @@ function handleConference(messageStream) {
       delete peers[dataObj['peerId']];
       var element = document.getElementById(dataObj['peerId']);
       element.parentNode.removeChild(element);
-    }
-    if (dataObj["count"] > 2) {
-      aviDiv.className = "row row-cols-2";
-      if (dataObj["count"] > 4) {
-        aviDiv.className = "row row-cols-3";
-      }
-    }
-    else {
-      if (aviDiv) {
-        aviDiv.className = "row row-cols-1";
-      }
+      element = document.getElementById(dataObj['peerId'] + "div");
+      element.parentNode.removeChild(element);
     }
   }
   if (dataObj['messageType'] == 'offer') {
@@ -259,6 +240,7 @@ function fail() {
 
 function addPeerVid(peerId) {
   var div = document.createElement("div");
+  div.setAttribute("id", peerId + "div");
   var vidElement = document.createElement("video");
   vidElement.setAttribute("id", peerId);
   div.className = "col";
@@ -272,6 +254,7 @@ function newPeerConnection(peerId) {
   peers[peerId] = new PeerConnection(peerConnectionConfig);
   addPeerVid(peerId);
   peers[peerId].peerId = peerId;
+  peers[peerId].negotiating = false;
   peers[peerId].onnegotiationneeded = negotiate;
   peers[peerId].onicecandidate = iceCandidateNeg;
   peers[peerId].ontrack = function (event) {
@@ -279,21 +262,21 @@ function newPeerConnection(peerId) {
   }
 }
 
-function createOffer(peerId) {
+function createPeerOffer(peerId) {
   if (peerId != personID) {
     if (!(peerId in peers)) {
       newPeerConnection(peerId);
-    }
-    peers[peerId].createOffer(function (offer) {
-      peers[peerId].setLocalDescription(offer, function () {
-        var obj = {};
-        obj["messageType"] = "offer";
-        obj["offer"] = offer;
-        obj["peerId"] = peerId;
-        obj['chatID'] = chatId;
-        chatSocket.send(JSON.stringify(obj));
+      peers[peerId].createOffer(function (offer) {
+        peers[peerId].setLocalDescription(offer, function () {
+          var obj = {};
+          obj["messageType"] = "offer";
+          obj["offer"] = offer;
+          obj["peerId"] = peerId;
+          obj['chatID'] = chatId;
+          chatSocket.send(JSON.stringify(obj));
+        }, fail);
       }, fail);
-    }, fail);
+    }
   }
 }
 
@@ -346,7 +329,7 @@ function receiveAnswer(peerAnswer) {
 function muteMe() {
   if (localStream) {
     localStream.getAudioTracks().forEach(track => {
-      track.stop();
+      track.enabled = false;
     });
   }
   var el = document.getElementById("mute");
@@ -355,15 +338,17 @@ function muteMe() {
 }
 
 function unMuteMe() {
-  getStream().then(gotStream);
+  if (localStream) {
+    localStream.getAudioTracks().forEach(track => {
+      track.enabled = true;
+    });
+  }
   var el = document.getElementById("mute");
-  el.onclick = unMuteMe;
+  el.onclick = muteMe;
   el.innerHTML = "Mute";
 }
 
 async function negotiate(event) {
-  console.log("Negotiate");
-  console.log(event);
   if (event.target) {
     var peerConnection = peers[event.target.peerId];
     const offer = await peerConnection.createOffer();
