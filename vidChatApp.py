@@ -42,19 +42,21 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                 self._ROOMCONNECTIONS[data.get('joinChat')].append(self)
             else:
                 self._ROOMCONNECTIONS[data.get('joinChat')] = [self]
-            self._name = data.get('personName')
-            self._id = uuid.uuid4().hex[:8]
+            if not self._name:
+                self._name = data.get('personName')
+            if not self._id:
+                self._id = uuid.uuid4().hex[:8]
             logger.info("{} Joined the {} chatroom".format(self._name,
                                                            data.get('joinChat')))
             count = len(self._ROOMCONNECTIONS[data.get('joinChat')])
             people = [
                 c._name for c in self._ROOMCONNECTIONS[data.get('joinChat')]]
-            peers = [
-                c._id for c in self._ROOMCONNECTIONS[data.get('joinChat')]]
+            # peers = [
+            #     c._id for c in self._ROOMCONNECTIONS[data.get('joinChat')]]
             for connection in self._ROOMCONNECTIONS[data.get('joinChat')]:
                 connection.write_message({'count': count,
                                           'people': people,
-                                          'peers': peers,
+                                          'lastPeer': self._id,
                                           'id': connection._id,
                                           'messageType': 'init'})
         else:

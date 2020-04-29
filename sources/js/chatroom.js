@@ -7,6 +7,7 @@ var videoElement = null;
 var localStream = null;
 var personID = null;
 var peers = {};
+var negotiating = false;
 var inboundStreams = {};
 var peerConnectionConfig = { 'iceServers': [{ 'url': 'stun:stun.services.mozilla.com' }, { 'url': 'stun:stun.l.google.com:19302' }, { "urls": "turn:15.206.150.7:3478", "username": "test", "credential": "test123" }] };
 var PeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
@@ -87,10 +88,6 @@ function sendMessage() {
   }
 }
 function onOpen(evt) {
-  var obj = {};
-  obj['joinChat'] = chatId;
-  obj['personName'] = personName
-  chatSocket.send(JSON.stringify(obj));
   var el = document.getElementById("textMessage");
   el.removeAttribute("disabled");
   el = document.getElementById("sendMessage");
@@ -104,6 +101,10 @@ function onOpen(evt) {
   // getStream().then(getDevices).then(gotDevices);
   getDevices().then(gotDevices);
   joinAVI();
+  var obj = {};
+  obj['joinChat'] = chatId;
+  obj['personName'] = personName
+  chatSocket.send(JSON.stringify(obj));
 }
 function joinAVI() {
   videoElement = document.getElementById('local');
@@ -117,11 +118,6 @@ function stopAVI() {
 }
 
 function getStream() {
-  if (localStream) {
-    localStream.getTracks().forEach(track => {
-      track.stop();
-    });
-  }
   const audioSource = audioSelect.value;
   const videoSource = videoSelect.value;
   const constraints = {
@@ -182,7 +178,7 @@ function onError(evt) {
   console.log(evt);
 }
 function onClose(evt) {
-  closeChat();
+  console.log("Chat Closed");
 }
 function handleConference(messageStream) {
   var dataObj = JSON.parse(messageStream);
@@ -232,7 +228,7 @@ function handleConference(messageStream) {
   }
 }
 function closeChat() {
-  console.log("Close Chat");
+  chatSocket.close();
 }
 function fail() {
   console.log("Failed");
@@ -315,7 +311,6 @@ function receiveOffer(peerOffer) {
         obj["peerId"] = peerOffer['peerId'];
         obj['chatID'] = chatId;
         chatSocket.send(JSON.stringify(obj));
-        joinAVI();
       }, fail);
     }, fail);
   }, fail);
@@ -323,7 +318,6 @@ function receiveOffer(peerOffer) {
 
 function receiveAnswer(peerAnswer) {
   peers[peerAnswer['peerId']].setRemoteDescription(new SessionDescription(peerAnswer['answer']));
-  joinAVI();
 }
 
 function muteMe() {
@@ -349,7 +343,8 @@ function unMuteMe() {
 }
 
 async function negotiate(event) {
-  if (event.target) {
+  if (event.target && !negotiating) {
+    negotiating = true;
     var peerConnection = peers[event.target.peerId];
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
@@ -359,8 +354,10 @@ async function negotiate(event) {
     obj['chatID'] = chatId;
     obj["offer"] = offer;
     chatSocket.send(JSON.stringify(obj));
+    negotiating = false;
   }
-  if (event.offer) {
+  if (event.offer && !negotiating) {
+    negotiating = true;
     await peers[event.peerId].setRemoteDescription(event.offer);
     const answer = await peers[event.peerId].createAnswer();
     await peers[event.peerId].setLocalDescription(answer);
@@ -370,6 +367,7 @@ async function negotiate(event) {
     obj['chatID'] = chatId;
     obj["answer"] = answer;
     chatSocket.send(JSON.stringify(obj));
+    negotiating = false;
   }
   if (event.answer) {
     await peers[event.peerId].setRemoteDescription(event.answer);
