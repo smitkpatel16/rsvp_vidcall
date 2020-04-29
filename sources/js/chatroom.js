@@ -7,7 +7,6 @@ var videoElement = null;
 var localStream = null;
 var personID = null;
 var peers = {};
-var negotiating = false;
 var inboundStreams = {};
 var peerConnectionConfig = { 'iceServers': [{ 'url': 'stun:stun.services.mozilla.com' }, { 'url': 'stun:stun.l.google.com:19302' }, { "urls": "turn:15.206.150.7:3478", "username": "test", "credential": "test123" }] };
 var PeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
@@ -343,31 +342,36 @@ function unMuteMe() {
 }
 
 async function negotiate(event) {
-  if (event.target && !negotiating) {
-    negotiating = true;
+  if (event.target) {
     var peerConnection = peers[event.target.peerId];
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    var obj = {}
-    obj['peerId'] = event.target.peerId;
-    obj['messageType'] = "negotiate";
-    obj['chatID'] = chatId;
-    obj["offer"] = offer;
-    chatSocket.send(JSON.stringify(obj));
-    negotiating = false;
+    if (!peerConnection.negotiating) {
+      peerConnection.negotiating = true;
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      var obj = {}
+      obj['peerId'] = event.target.peerId;
+      obj['messageType'] = "negotiate";
+      obj['chatID'] = chatId;
+      obj["offer"] = offer;
+      chatSocket.send(JSON.stringify(obj));
+      peerConnection.negotiating = false;
+    }
   }
-  if (event.offer && !negotiating) {
-    negotiating = true;
-    await peers[event.peerId].setRemoteDescription(event.offer);
-    const answer = await peers[event.peerId].createAnswer();
-    await peers[event.peerId].setLocalDescription(answer);
-    var obj = {}
-    obj['peerId'] = event.peerId;
-    obj['messageType'] = "negotiate";
-    obj['chatID'] = chatId;
-    obj["answer"] = answer;
-    chatSocket.send(JSON.stringify(obj));
-    negotiating = false;
+  if (event.offer) {
+    var peerConnection = peers[event.peerId];
+    if (!peerConnection.negotiating) {
+      peerConnection.negotiating = true
+      await peerConnection.setRemoteDescription(event.offer);
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      var obj = {}
+      obj['peerId'] = event.peerId;
+      obj['messageType'] = "negotiate";
+      obj['chatID'] = chatId;
+      obj["answer"] = answer;
+      chatSocket.send(JSON.stringify(obj));
+      peerConnection.negotiating = false;
+    }
   }
   if (event.answer) {
     await peers[event.peerId].setRemoteDescription(event.answer);
