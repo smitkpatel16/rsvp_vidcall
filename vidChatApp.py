@@ -92,8 +92,8 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                 if data.get("messageType") == "negotiate":
                     for connection in self._ROOMCONNECTIONS[data.get('chatID')]:
                         if connection._id == data.get("peerId"):
-                            logger.info("{} negotiate with {}".format(
-                                self._name, connection._name))
+                            logger.info("{} negotiate {} {}".format(
+                                self._name, "offer to" if data.get("offer") else "answer to", connection._name))
                             if data.get("offer"):
                                 connection.write_message({'messageType': "negotiate",
                                                           'offer': data.get('offer'),
@@ -109,6 +109,13 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                                 self._name, connection._name))
                             connection.write_message({'messageType': "ice",
                                                       'ice': data.get('ice'),
+                                                      'peerId': self._id})
+                if data.get("messageType") == "requestMedia":
+                    for connection in self._ROOMCONNECTIONS[data.get('chatID')]:
+                        if connection._id == data.get("peerId"):
+                            logger.info("{} media request with {}".format(
+                                self._name, connection._name))
+                            connection.write_message({'messageType': "requestMedia",
                                                       'peerId': self._id})
 
     def on_close(self):

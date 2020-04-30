@@ -1,3 +1,4 @@
+"use strict";
 var chatSocket = null;
 var chatId = null;
 var personName = null;
@@ -8,7 +9,18 @@ var localStream = null;
 var personID = null;
 var peers = {};
 var inboundStreams = {};
-var peerConnectionConfig = { 'iceServers': [{ 'url': 'stun:stun.services.mozilla.com' }, { 'url': 'stun:stun.l.google.com:19302' }, { "urls": "turn:15.206.150.7:3478", "username": "test", "credential": "test123" }] };
+var peerConnectionConfig = {
+  'iceServers': [
+    {
+      'url': 'stun:rsvplightsail.in:3478'
+    },
+    {
+      "url": "turn:rsvplightsail.in:3478",
+      "username": "test",
+      "credential": "test123"
+    }
+  ]
+};
 var PeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
 var IceCandidate = window.RTCIceCandidate || window.RTCIceCandidate;
 var SessionDescription = window.RTCSessionDescription || window.RTCSessionDescription;
@@ -18,11 +30,13 @@ function handleError(error) {
   console.error('Error: ', error);
 }
 function getChatID() {
-  url_string = window.location.href;
+  var url_string = window.location.href;
   var u = new URL(url_string);
   var c = u.searchParams.get("id");
   var el = document.getElementById("chatID");
   el.value = c;
+  // getDevices().then(gotDevices);
+  joinAVI();
 }
 function chatCollapse() {
   showStyle = "height: 50vh; overflow-y: scroll; border: 1px solid #333333;"
@@ -45,6 +59,8 @@ function joinChat() {
     if (chatSocket) {
       chatSocket.close();
     }
+    // audioSelect = document.querySelector('select#audioSource');
+    // videoSelect = document.querySelector('select#videoSource');
     window.history.pushState("", "", location.protocol + '//' + location.host + location.pathname + "?id=" + chatId);
     var wsURL = "wss://" + window.location.host + "/chatsocket";
     console.log(window.location.host);
@@ -91,15 +107,11 @@ function onOpen(evt) {
   el.removeAttribute("disabled");
   el = document.getElementById("sendMessage");
   el.removeAttribute("disabled");
-  el = document.getElementById("mute");
-  el.removeAttribute("disabled");
-  audioSelect = document.querySelector('select#audioSource');
-  videoSelect = document.querySelector('select#videoSource');
+  // el = document.getElementById("mute");
+  // el.removeAttribute("disabled");
   // audioSelect.onchange = getStream;
   // videoSelect.onchange = getStream;
   // getStream().then(getDevices).then(gotDevices);
-  getDevices().then(gotDevices);
-  joinAVI();
   var obj = {};
   obj['joinChat'] = chatId;
   obj['personName'] = personName
@@ -117,17 +129,17 @@ function stopAVI() {
 }
 
 function getStream() {
-  const audioSource = audioSelect.value;
-  const videoSource = videoSelect.value;
+  // const audioSource = audioSelect.value;
+  // const videoSource = videoSelect.value;
   const constraints = {
-    audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
-    video: { deviceId: videoSource ? { exact: videoSource } : undefined }
+    audio: true,
+    video: true
   };
   return navigator.mediaDevices.getUserMedia(constraints);
 }
 function updateUnreadCount() {
-  var str = document.getElementById("chatDorp");
-  if (!str.className.includes("show")) {
+  var str = document.getElementById("wrapper");
+  if (!str.className.includes("toggled")) {
     var badge = document.getElementById("badge");
     var badgeCount = parseInt(badge.innerHTML);
     badgeCount = badgeCount + 1;
@@ -139,14 +151,20 @@ function removeUnreadCount() {
   badge.innerHTML = 0;
 }
 function gotStream(stream) {
+  if (localStream) {
+    stopAVI();
+  }
   localStream = stream; // make stream available to console
-  audioSelect.selectedIndex = [...audioSelect.options].
-    findIndex(option => option.text === stream.getAudioTracks()[0].label);
-  videoSelect.selectedIndex = [...videoSelect.options].
-    findIndex(option => option.text === stream.getVideoTracks()[0].label);
+  // audioSelect.selectedIndex = [...audioSelect.options].
+  //   findIndex(option => option.text === stream.getAudioTracks()[0].label);
+  // videoSelect.selectedIndex = [...videoSelect.options].
+  //   findIndex(option => option.text === stream.getVideoTracks()[0].label);
   videoElement.srcObject = stream;
-  for (var peerId in peers) {
-    stream.getTracks().forEach(track => { peers[peerId].addTrack(track) });
+}
+
+function sendStream(peerId) {
+  if (localStream) {
+    localStream.getTracks().forEach(track => { console.log("Adding track"); console.log(peers[peerId]); peers[peerId].addTrack(track); });
   }
 }
 
@@ -155,20 +173,20 @@ function getDevices() {
   return navigator.mediaDevices.enumerateDevices();
 }
 
-function gotDevices(deviceInfos) {
-  window.deviceInfos = deviceInfos; // make available to console
-  for (const deviceInfo of deviceInfos) {
-    const option = document.createElement('option');
-    option.value = deviceInfo.deviceId;
-    if (deviceInfo.kind === 'audioinput') {
-      option.text = deviceInfo.label || `Microphone ${audioSelect.length + 1}`;
-      audioSelect.appendChild(option);
-    } else if (deviceInfo.kind === 'videoinput') {
-      option.text = deviceInfo.label || `Camera ${videoSelect.length + 1}`;
-      videoSelect.appendChild(option);
-    }
-  }
-}
+// function gotDevices(deviceInfos) {
+//   window.deviceInfos = deviceInfos; // make available to console
+//   for (const deviceInfo of deviceInfos) {
+//     const option = document.createElement('option');
+//     option.value = deviceInfo.deviceId;
+//     if (deviceInfo.kind === 'audioinput') {
+//       option.text = deviceInfo.label || `Microphone ${audioSelect.length + 1}`;
+//       audioSelect.appendChild(option);
+//     } else if (deviceInfo.kind === 'videoinput') {
+//       option.text = deviceInfo.label || `Camera ${videoSelect.length + 1}`;
+//       videoSelect.appendChild(option);
+//     }
+//   }
+// }
 
 function onMessage(evt) {
   handleConference(evt.data);
@@ -200,7 +218,7 @@ function handleConference(messageStream) {
     var el = document.getElementById("peopleInChat");
     el.innerHTML = dataObj['people'];
     personID = dataObj['id'];
-    if (dataObj['lastPeer']) {
+    if (dataObj['lastPeer'] != personID) {
       createPeerOffer(dataObj['lastPeer']);
     }
   }
@@ -224,6 +242,9 @@ function handleConference(messageStream) {
   }
   if (dataObj['messageType'] == 'ice') {
     iceCandidateNeg(dataObj);
+  }
+  if (dataObj['messageType'] == 'requestMedia') {
+    sendStream(dataObj['peerId']);
   }
 }
 function closeChat() {
@@ -317,6 +338,11 @@ function receiveOffer(peerOffer) {
 
 function receiveAnswer(peerAnswer) {
   peers[peerAnswer['peerId']].setRemoteDescription(new SessionDescription(peerAnswer['answer']));
+  var obj = {}
+  obj["messageType"] = "requestMedia";
+  obj["peerId"] = peerAnswer['peerId'];
+  obj['chatID'] = chatId;
+  chatSocket.send(JSON.stringify(obj));
 }
 
 function muteMe() {
@@ -348,47 +374,64 @@ async function negotiate(event) {
       peerConnection.negotiating = true;
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
-      var obj = {}
+      var obj = {};
       obj['peerId'] = event.target.peerId;
       obj['messageType'] = "negotiate";
       obj['chatID'] = chatId;
       obj["offer"] = offer;
       chatSocket.send(JSON.stringify(obj));
-      peerConnection.negotiating = false;
+    }
+    else {
+      return;
     }
   }
   if (event.offer) {
     var peerConnection = peers[event.peerId];
     if (!peerConnection.negotiating) {
-      peerConnection.negotiating = true
+      peerConnection.negotiating = true;
       await peerConnection.setRemoteDescription(event.offer);
       const answer = await peerConnection.createAnswer();
       await peerConnection.setLocalDescription(answer);
-      var obj = {}
+      var obj = {};
       obj['peerId'] = event.peerId;
       obj['messageType'] = "negotiate";
       obj['chatID'] = chatId;
       obj["answer"] = answer;
       chatSocket.send(JSON.stringify(obj));
       peerConnection.negotiating = false;
+      sendStream(event.peerId);
+    }
+    else {
+      return;
     }
   }
   if (event.answer) {
-    await peers[event.peerId].setRemoteDescription(event.answer);
+    var peerConnection = peers[event.peerId];
+    if (peerConnection.negotiating) {
+      await peerConnection.setRemoteDescription(event.answer);
+      peerConnection.negotiating = false;
+    }
+    else {
+      return;
+    }
   }
 }
 
 jQuery.fn.attachTrack = function (ev) {
   this.each(function () {
-    if (ev.streams && ev.streams[0]) {
-      this.srcObject = ev.streams[0];
-    } else {
-      if (!inboundStreams[this.id]) {
-        inboundStreams[this.id] = new MediaStream();
-        this.srcObject = inboundStreams[this.id];
-      }
-      inboundStreams[this.id].addTrack(ev.track);
+    console.log("track received");
+    console.log(ev);
+    // if (ev.streams && ev.streams[0]) {
+    //   this.srcObject = ev.streams[0];
+    // }
+    // else {
+    if (!inboundStreams[this.id]) {
+      inboundStreams[this.id] = new MediaStream();
     }
+    inboundStreams[this.id].addTrack(ev.track);
+    this.srcObject = inboundStreams[this.id];
+    //   this.play();
+    // }
   });
 }
 window.addEventListener("load", getChatID, false);

@@ -41,7 +41,8 @@ def makeApp():
 
 if __name__ == "__main__":
     application = makeApp()
-    # http_server = tornado.httpserver.HTTPServer(application, ssl_options={"certfile": os.path.join("certs","fullchain1.pem"),"keyfile": os.path.join("certs", "privkey1.pem"),})
+    # http_server = tornado.httpserver.HTTPServer(application, ssl_options={"certfile": os.path.join(
+    #     "certs", "fullchain2.pem"), "keyfile": os.path.join("certs", "privkey2.pem"), })
     tornado.options.parse_command_line()
     signal.signal(signal.SIGINT, application.signal_handler)
     # http_server.listen(443)
