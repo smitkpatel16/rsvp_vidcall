@@ -5,15 +5,21 @@
  */
 body {
   overflow-x: hidden;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-image: url("/static/images/bglarge.jpg");
+  background-color: #333333;  
 }
 
 #sidebar-wrapper {
   min-height: 100vh;
   margin-left: -15rem;
+  padding: 0px 0px 0px 10px;
   -webkit-transition: margin .25s ease-out;
   -moz-transition: margin .25s ease-out;
   -o-transition: margin .25s ease-out;
   transition: margin .25s ease-out;
+  background-color: #111;
 }
 .notification .badge {
   position: relative;
@@ -56,6 +62,11 @@ body {
   }
 }
 video {
-  max-width: 100%;
   width: 320px;
+  height: 240px;
+  max-width: 100%;  
+  background-color: #111;
+  transform: rotateY(180deg);
+  -webkit-transform:rotateY(180deg); /* Safari and Chrome */
+  -moz-transform:rotateY(180deg); /* Firefox */
 }

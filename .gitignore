@@ -1,5 +1,6 @@
 .vscode/settings.json
-junk/*
+use_later/*
 certs/*
 __pycache__/*
 node_modules/*
+package-lock.json

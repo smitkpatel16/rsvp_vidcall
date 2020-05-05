@@ -8,14 +8,29 @@ var videoElement = null;
 var localStream = null;
 var personID = null;
 var peers = {};
+var sendAudio = false;
+var sendVideo = false;
+var sendAV = true;
 var inboundStreams = {};
+const offerOptions = {
+  offerToReceiveAudio: 1,
+  offerToReceiveVideo: 1
+};
 var peerConnectionConfig = {
   'iceServers': [
     {
-      'url': 'stun:rsvplightsail.in:3478'
+      urls: "stun:stun.services.mozilla.com",
+      username: "louis@mozilla.com",
+      credential: "webrtcdemo"
     },
     {
-      "url": "turn:rsvplightsail.in:3478",
+      'urls': 'stun:stun.l.google.com:19302'
+    },
+    {
+      'urls': 'stun:rsvplightsail.in:3478'
+    },
+    {
+      "urls": "turn:rsvplightsail.in:3478",
       "username": "test",
       "credential": "test123"
     }
@@ -162,8 +177,9 @@ function gotStream(stream) {
   videoElement.srcObject = stream;
 }
 
-function sendStream(peerId) {
+async function sendStream(peerId) {
   if (localStream) {
+    peers[peerId].getSenders().forEach(sender => { console.log("Removing track"); console.log(peers[peerId]); peers[peerId].removeTrack(sender); })
     localStream.getTracks().forEach(track => { console.log("Adding track"); console.log(peers[peerId]); peers[peerId].addTrack(track); });
   }
 }
@@ -189,7 +205,7 @@ function getDevices() {
 // }
 
 function onMessage(evt) {
-  handleConference(evt.data);
+  handleConference(evt.data).then(value => { console.log(value) });
 }
 function onError(evt) {
   console.log(evt);
@@ -197,17 +213,19 @@ function onError(evt) {
 function onClose(evt) {
   console.log("Chat Closed");
 }
-function handleConference(messageStream) {
+async function handleConference(messageStream) {
   var dataObj = JSON.parse(messageStream);
   if (dataObj['messageType'] == 'text') {
     var txtBlock = document.getElementById("chatMessages");
     var div = document.createElement("div");
     var b = document.createElement("b");
     var pre = document.createElement("pre");
-    div.style = "border: 1px solid #eeeeee; background-color: #eeeeee; margin-top: 2px;";
+    div.className = "btn-dark";
+    div.style = "border: 1px solid #eeeeee; margin-top: 2px;";
     b.innerHTML = dataObj['messagePersonName'];
     pre.innerHTML = dataObj["message"];
     pre.style = "margin-bottom: 0;"
+    pre.className = "btn-dark";
     div.append(b);
     div.append(pre);
     txtBlock.append(div);
@@ -219,7 +237,8 @@ function handleConference(messageStream) {
     el.innerHTML = dataObj['people'];
     personID = dataObj['id'];
     if (dataObj['lastPeer'] != personID) {
-      createPeerOffer(dataObj['lastPeer']);
+      peers[dataObj['lastPeer']] = await newPeerConnection(dataObj['lastPeer']);
+      await createPeerOffer(dataObj['lastPeer']);
     }
   }
   if (dataObj['messageType'] == 'remove') {
@@ -232,20 +251,21 @@ function handleConference(messageStream) {
     }
   }
   if (dataObj['messageType'] == 'offer') {
-    receiveOffer(dataObj);
+    await receiveOffer(dataObj);
   }
   if (dataObj['messageType'] == 'response') {
-    receiveAnswer(dataObj);
+    await receiveAnswer(dataObj);
   }
   if (dataObj['messageType'] == 'negotiate') {
-    negotiate(dataObj);
+    await negotiate(dataObj);
   }
   if (dataObj['messageType'] == 'ice') {
-    iceCandidateNeg(dataObj);
+    await iceCandidateNeg(dataObj);
   }
   if (dataObj['messageType'] == 'requestMedia') {
-    sendStream(dataObj['peerId']);
+    await sendStream(dataObj['peerId']);
   }
+  return "Done";
 }
 function closeChat() {
   chatSocket.close();
@@ -266,83 +286,120 @@ function addPeerVid(peerId) {
   vidElement.autoplay = true;
 }
 
-function newPeerConnection(peerId) {
-  peers[peerId] = new PeerConnection(peerConnectionConfig);
+async function newPeerConnection(peerId) {
+  var tempPeer = new PeerConnection(peerConnectionConfig);
   addPeerVid(peerId);
-  peers[peerId].peerId = peerId;
-  peers[peerId].negotiating = false;
-  peers[peerId].onnegotiationneeded = negotiate;
-  peers[peerId].onicecandidate = iceCandidateNeg;
-  peers[peerId].ontrack = function (event) {
+  tempPeer.peerId = peerId;
+  tempPeer.negotiating = false;
+  tempPeer.mrsent = false;
+  tempPeer.onicecandidate = iceCandidateNeg;
+  tempPeer.onnegotiationneeded = negotiate;
+  tempPeer.ontrack = function (event) {
     $('#' + peerId).attachTrack(event);
   }
+  return tempPeer;
 }
 
-function createPeerOffer(peerId) {
+async function createPeerOffer(peerId) {
   if (peerId != personID) {
-    if (!(peerId in peers)) {
-      newPeerConnection(peerId);
-      peers[peerId].createOffer(function (offer) {
-        peers[peerId].setLocalDescription(offer, function () {
-          var obj = {};
-          obj["messageType"] = "offer";
-          obj["offer"] = offer;
-          obj["peerId"] = peerId;
-          obj['chatID'] = chatId;
-          chatSocket.send(JSON.stringify(obj));
-        }, fail);
-      }, fail);
+    peers[peerId].negotiating = true;
+    var offer = await peers[peerId].createOffer();
+    await peers[peerId].setLocalDescription(offer);
+    var obj = {};
+    obj["messageType"] = "offer";
+    obj["offer"] = offer;
+    obj["peerId"] = peerId;
+    obj['chatID'] = chatId;
+    chatSocket.send(JSON.stringify(obj));
+  }
+}
+async function iceCandidateNeg(event) {
+  if (event && event.iceCandidate) {
+    var peerId = event.peerId;
+    var peerConnection = peers[peerId];
+    if (event.iceCandidate) {
+      try {
+        await peerConnection.addIceCandidate(new IceCandidate(event.iceCandidate));
+        console.log('ICE state: ', peerConnection.iceConnectionState)
+        // if (peerConnection.iceConnectionState == "connected") {
+        //   await sendStream(event.peerId);
+        // }
+      }
+      catch (err) {
+        console.log('ICE error: ', err)
+        console.log(event.iceCandidate);
+        if (!iceQueue[peerConnection.peerId]) {
+          iceQueue[peerConnection.peerId] = [event.iceCandidate];
+        }
+        else {
+          iceQueue[peerConnection.peerId].push(event.iceCandidate);
+        }
+      }
     }
+  }
+  else {
+    if (event.candidate) {
+      if (event.target) {
+        var peerId = event.target.peerId;
+        var obj = {};
+        obj["messageType"] = "ice";
+        obj["iceCandidate"] = event.candidate;
+        obj['chatID'] = chatId;
+        obj["peerId"] = peerId;
+        chatSocket.send(JSON.stringify(obj));
+      }
+    }
+    // else {
+    //   if (event.target) {
+    //     await sendStream(event.target.peerId);
+    //   }
+    // }
   }
 }
 
-function iceCandidateNeg(event) {
-  if (event.candidate) {
-    if (event.target) {
-      var peerId = event.target.peerId;
+async function receiveOffer(peerOffer) {
+  if (!(peerOffer['peerId'] in peers)) {
+    peers[peerOffer['peerId']] = await newPeerConnection(peerOffer['peerId']);
+    // await sendStream(peerOffer['peerId']);
+  }
+  if (!peerOffer['peerId'].negotiating) {
+    peers[peerOffer['peerId']].negotiating = true;
+    await peers[peerOffer['peerId']].setRemoteDescription(peerOffer['offer'])
+    var answer = await peers[peerOffer['peerId']].createAnswer()
+    await peers[peerOffer['peerId']].setLocalDescription(answer)
+    var obj = {};
+    obj["messageType"] = "response";
+    obj["answer"] = answer;
+    obj["peerId"] = peerOffer['peerId'];
+    obj['chatID'] = chatId;
+    chatSocket.send(JSON.stringify(obj));
+    peers[peerOffer['peerId']].negotiating = false;
+  }
+}
+
+async function receiveAnswer(peerAnswer) {
+  if (peers[peerAnswer['peerId']].negotiating) {
+    await peers[peerAnswer['peerId']].setRemoteDescription(peerAnswer['answer']);
+    peers[peerAnswer['peerId']].negotiating = false;
+    // while (iceQueue[peerAnswer['peerId']] && iceQueue[peerAnswer['peerId']].length) {
+    //   await peerConnection.addIceCandidate(new IceCandidate(iceQueue[peerAnswer['peerId']].pop()));
+    // }
+    if (!peers[peerAnswer['peerId']].mrsent) {
+      peers[peerAnswer['peerId']].mrsent = true;
       var obj = {};
-      obj["messageType"] = "ice";
-      obj["ice"] = event;
+      obj["messageType"] = "requestMedia";
+      obj["peerId"] = peerAnswer['peerId'];
       obj['chatID'] = chatId;
-      obj["peerId"] = peerId;
       chatSocket.send(JSON.stringify(obj));
     }
   }
-  if (event && event.peerId) {
-    var peerId = event.peerId;
-    var peerConnection = peers[peerId];
-    if (event.ice.candidate) {
-      peerConnection.addIceCandidate(new IceCandidate(event.ice));
-    }
-  }
-}
-
-function receiveOffer(peerOffer) {
-  if (!(peerOffer['peerId'] in peers)) {
-    newPeerConnection(peerOffer['peerId']);
-    peerOffer['offer'] = new SessionDescription(peerOffer['offer']);
-  }
-  peers[peerOffer['peerId']].setRemoteDescription(peerOffer['offer'], function () {
-    peers[peerOffer['peerId']].createAnswer(function (answer) {
-      peers[peerOffer['peerId']].setLocalDescription(new SessionDescription(answer), function () {
-        var obj = {};
-        obj["messageType"] = "response";
-        obj["answer"] = answer;
-        obj["peerId"] = peerOffer['peerId'];
-        obj['chatID'] = chatId;
-        chatSocket.send(JSON.stringify(obj));
-      }, fail);
-    }, fail);
-  }, fail);
-}
-
-function receiveAnswer(peerAnswer) {
-  peers[peerAnswer['peerId']].setRemoteDescription(new SessionDescription(peerAnswer['answer']));
-  var obj = {}
-  obj["messageType"] = "requestMedia";
-  obj["peerId"] = peerAnswer['peerId'];
-  obj['chatID'] = chatId;
-  chatSocket.send(JSON.stringify(obj));
+  // await sendStream(peerAnswer['peerId']);
+  // sendStream(peerAnswer['peerId']);
+  // var obj = {}
+  // obj["messageType"] = "requestMedia";
+  // obj["peerId"] = peerAnswer['peerId'];
+  // obj['chatID'] = chatId;
+  // chatSocket.send(JSON.stringify(obj));
 }
 
 function muteMe() {
@@ -371,48 +428,7 @@ async function negotiate(event) {
   if (event.target) {
     var peerConnection = peers[event.target.peerId];
     if (!peerConnection.negotiating) {
-      peerConnection.negotiating = true;
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      var obj = {};
-      obj['peerId'] = event.target.peerId;
-      obj['messageType'] = "negotiate";
-      obj['chatID'] = chatId;
-      obj["offer"] = offer;
-      chatSocket.send(JSON.stringify(obj));
-    }
-    else {
-      return;
-    }
-  }
-  if (event.offer) {
-    var peerConnection = peers[event.peerId];
-    if (!peerConnection.negotiating) {
-      peerConnection.negotiating = true;
-      await peerConnection.setRemoteDescription(event.offer);
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      var obj = {};
-      obj['peerId'] = event.peerId;
-      obj['messageType'] = "negotiate";
-      obj['chatID'] = chatId;
-      obj["answer"] = answer;
-      chatSocket.send(JSON.stringify(obj));
-      peerConnection.negotiating = false;
-      sendStream(event.peerId);
-    }
-    else {
-      return;
-    }
-  }
-  if (event.answer) {
-    var peerConnection = peers[event.peerId];
-    if (peerConnection.negotiating) {
-      await peerConnection.setRemoteDescription(event.answer);
-      peerConnection.negotiating = false;
-    }
-    else {
-      return;
+      await createPeerOffer(event.target.peerId);
     }
   }
 }
@@ -429,9 +445,8 @@ jQuery.fn.attachTrack = function (ev) {
       inboundStreams[this.id] = new MediaStream();
     }
     inboundStreams[this.id].addTrack(ev.track);
+    console.log("Stream Added");
     this.srcObject = inboundStreams[this.id];
-    //   this.play();
-    // }
   });
 }
 window.addEventListener("load", getChatID, false);

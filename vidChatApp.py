@@ -9,19 +9,24 @@ logger = logging.getLogger(__name__)
 
 
 # ===============================================================================
+# MainHandler- Default request handler
+# ===============================================================================
+class MainHandler(tornado.web.RequestHandler):
+    """Generic request handler that moves all http requests to https.
+    """
+
+    def prepare(self):
+        pass
+        # if self.request.protocol == 'http':
+        #     self.redirect('https://' + self.request.host, permanent=True)
+
+
+# ===============================================================================
 # HomePage- Default homepage for hello
 # ===============================================================================
-class HomePage(tornado.web.RequestHandler):
+class HomePage(MainHandler):
     def get(self):
         self.render("sources/index.html")
-
-
-# ===============================================================================
-# PageStream- Testing page to stream audio and video
-# ===============================================================================
-class PageStream(tornado.web.RequestHandler):
-    def get(self):
-        self.render("sources/viewMe.html")
 
 
 # ===============================================================================
@@ -108,7 +113,7 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                             logger.info("{} ice with {}".format(
                                 self._name, connection._name))
                             connection.write_message({'messageType': "ice",
-                                                      'ice': data.get('ice'),
+                                                      'iceCandidate': data.get('iceCandidate'),
                                                       'peerId': self._id})
                 if data.get("messageType") == "requestMedia":
                     for connection in self._ROOMCONNECTIONS[data.get('chatID')]:
@@ -138,6 +143,6 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
 # ===============================================================================
 # Chat- Main page to connect chat rooms
 # ===============================================================================
-class Chat(tornado.web.RequestHandler):
+class Chat(MainHandler):
     def get(self):
         self.render("sources/chatRoom2.html")

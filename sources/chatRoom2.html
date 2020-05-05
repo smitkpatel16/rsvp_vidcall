@@ -4,21 +4,23 @@
 <head>
 
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="" />
+  <meta name="author" content="" />
+  <link rel="shortcut icon" href="#" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>RSVP Vidchat</title>
 
   <!-- Bootstrap core CSS -->
-  <link href={{ static_url("vendor/bootstrap/css/bootstrap.min.css") }} rel="stylesheet">
+  <link href={{ static_url("vendor/bootstrap/css/bootstrap.css") }} rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
   <!-- Custom styles for this template -->
   <link href={{ static_url("css/simple-sidebar.css") }} rel="stylesheet">
   <script src={{ static_url("js/adapter.js") }}></script>
-  <script src={{ static_url("js/chatroom.js") }}> </script>
+  <script src={{ static_url("js/chatroom.js") }}></script>
+
 </head>
 
 <body>
@@ -26,18 +28,20 @@
   <div class="d-flex" id="wrapper">
 
     <!-- Sidebar -->
-    <div class="bg-light border-right" id="sidebar-wrapper">
-      <div class="sidebar-heading">RSVP Chat </div>
-      <div class="list-group list-group-flush">
-        <label for="personName">&nbsp;Name:</label>
-        <input name="personName" id="personName" type="text" label="Name: " value="" size=20 />
-        <label for="personName">&nbsp;Chat ID:</label>
-        <input name="chatID" id="chatID" type="text" label="Chat ID: " value="" size=20 />
-        <button class="btn btn-primary" onclick="joinChat();">&nbsp;&nbsp;Join</button>
-        <div id="peopleInChat"></div>
-        <div id="chatMessages" style="height: 50vh; overflow-y: auto; border: 1px solid #333333;"></div>
-        <textarea id="textMessage" disabled></textarea>
-        <input type="button" id="sendMessage" onclick="sendMessage()" value="Send" disabled />
+    <div class="bg-dark border-dark" id="sidebar-wrapper">
+      <div class="sidebar-heading btn-dark">RSVP Chat </div>
+      <div class="list-group list-group-flush bg-dark">
+        <label for="personName" class="btn-dark">&nbsp;Name:</label>
+        <input name="personName" class="btn-dark" id="personName" type="text" label="Name: " value="" size=20 />
+        <label for="chatID" class="btn-dark">&nbsp;Chat ID:</label>
+        <input name="chatID" class="btn-dark" id="chatID" type="text" label="Chat ID: " value="" size=20 />
+        <button class="btn-dark btn-primary" onclick="joinChat();">&nbsp;&nbsp;Join</button>
+        <div id="peopleInChat" class="btn-dark"></div>
+        <div id="chatMessages" style="height: 50vh; overflow-y: auto; border: 1px solid #333333; padding: 10px;"
+          class="btn-dark">
+        </div>
+        <textarea id="textMessage" data-emoji-picker="true" disabled class="btn-dark"></textarea>
+        <input type="button" id="sendMessage" onclick="sendMessage()" value="Send" disabled class="btn-dark" />
         <!-- <label for="audioSource">Audio:</label><select id="audioSource"></select>
         <label for="videoSource">Video:</label><select id="videoSource"></select> -->
         <!-- <button class="btn btn-primary" onclick="sendStream();">Send AV</button>
@@ -48,11 +52,12 @@
     <!-- /#sidebar-wrapper -->
 
     <!-- Page Content -->
-    <div id="page-content-wrapper">
+    <div id="page-content-wrapper" class="bg-dark">
 
-      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom notification">
-        <span class="badge" id="badge">0</span>
-        <button class="btn btn-primary" id="menu-toggle" onclick="removeUnreadCount();">Toggle Menu</button>
+      <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom notification">
+        <span class=" badge" id="badge">0</span>
+        <button class="btn btn-primary" id="menu-toggle" onclick="removeUnreadCount();"
+          style="background-color: #333333;  color: #ffffff;">Toggle Menu</button>
 
         <!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
           aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -83,7 +88,7 @@
   <!-- /#wrapper -->
 
   <!-- Bootstrap core JavaScript -->
-  <script src={{ static_url("vendor/bootstrap/js/bootstrap.bundle.min.js") }}></script>
+  <script src={{ static_url("vendor/bootstrap/js/bootstrap.js") }}></script>
 
   <!-- Menu Toggle Script -->
   <script>
@@ -92,7 +97,12 @@
       $("#wrapper").toggleClass("toggled");
     });
   </script>
-
+  <script src={{ static_url("js/emojiPicker.js") }}></script>
+  <script>
+    (() => {
+      new EmojiPicker()
+    })()
+  </script>
 </body>
 
 </html>

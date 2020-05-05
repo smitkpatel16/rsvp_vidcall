@@ -5,7 +5,7 @@ import tornado.ioloop
 import tornado.web
 import tornado.options
 import tornado.httpserver
-from vidChatApp import HomePage, PageStream, Chat, ChatRoomSocket
+from vidChatApp import HomePage, Chat, ChatRoomSocket
 
 
 class RSVPVidChat(tornado.web.Application):
@@ -25,7 +25,6 @@ class RSVPVidChat(tornado.web.Application):
 def buildHandlers():
     return [
         (r"/", HomePage),
-        (r"/page", PageStream),
         (r"/chat", Chat),
         (r"/chatsocket", ChatRoomSocket)
     ]
@@ -41,8 +40,9 @@ def makeApp():
 
 if __name__ == "__main__":
     application = makeApp()
+    application.listen(80)
     # http_server = tornado.httpserver.HTTPServer(application, ssl_options={"certfile": os.path.join(
-    #     "certs", "fullchain2.pem"), "keyfile": os.path.join("certs", "privkey2.pem"), })
+    # "certs", "fullchain2.pem"), "keyfile": os.path.join("certs", "privkey2.pem"), })
     tornado.options.parse_command_line()
     signal.signal(signal.SIGINT, application.signal_handler)
     # http_server.listen(443)
