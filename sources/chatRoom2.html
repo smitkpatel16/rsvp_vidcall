@@ -16,6 +16,9 @@
   <!-- Bootstrap core CSS -->
   <link href={{ static_url("vendor/bootstrap/css/bootstrap.css") }} rel="stylesheet">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <!-- Add icon library -->
+  <script src='https://kit.fontawesome.com/a076d05399.js'></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <!-- Custom styles for this template -->
   <link href={{ static_url("css/simple-sidebar.css") }} rel="stylesheet">
   <script src={{ static_url("js/adapter.js") }}></script>
@@ -28,20 +31,33 @@
   <div class="d-flex" id="wrapper">
 
     <!-- Sidebar -->
-    <div class="bg-dark border-dark" id="sidebar-wrapper">
-      <div class="sidebar-heading btn-dark">RSVP Chat </div>
-      <div class="list-group list-group-flush bg-dark">
-        <label for="personName" class="btn-dark">&nbsp;Name:</label>
-        <input name="personName" class="btn-dark" id="personName" type="text" label="Name: " value="" size=20 />
-        <label for="chatID" class="btn-dark">&nbsp;Chat ID:</label>
-        <input name="chatID" class="btn-dark" id="chatID" type="text" label="Chat ID: " value="" size=20 />
-        <button class="btn-dark btn-primary" onclick="joinChat();">&nbsp;&nbsp;Join</button>
-        <div id="peopleInChat" class="btn-dark"></div>
+    <div class="bg-transparent border-transparent collapse show" id="sidebar-wrapper">
+      <div class="sidebar-heading btn-transparent">RSVP Chat </div>
+      <div class="list-group list-group-flush bg-transparent">
+        <label for="personName" class="btn-transparent">&nbsp;Name:</label>
+        <input name="personName" class="btn-transparent" id="personName" type="text" label="Name: " value="" size=20 />
+        <label for="chatID" class="btn-transparent">&nbsp;Chat ID:</label>
+        <input name="chatID" class="btn-transparent" id="chatID" type="text" value="" size=20 />
+        <button class=" btn btn-primary" data-toggle="collapse" data-target="#sidebar-wrapper" onclick="joinChat();"
+          style="background-color: rgba(00, 123, 255, 0.2);">&nbsp;&nbsp;Join</button>
+        <div id="peopleInChat" class="btn-transparent"></div>
         <div id="chatMessages" style="height: 50vh; overflow-y: auto; border: 1px solid #333333; padding: 10px;"
-          class="btn-dark">
+          class="btn-transparent">
         </div>
-        <textarea id="textMessage" data-emoji-picker="true" disabled class="btn-dark"></textarea>
-        <input type="button" id="sendMessage" onclick="sendMessage()" value="Send" disabled class="btn-dark" />
+        <textarea id="textMessage" data-emoji-picker="true" disabled class="btn-transparent"
+          style="background-color:rgba(00,00, 00, 0.3);"></textarea>
+        <div class="image-upload">
+          <label for="file-input">
+            <i class="fas fa-image" style="font-size:48px;color:black;" alt="Upload Image" title="Upload Image"></i>
+          </label>
+
+          <input id="file-input" type="file" onchange="openImage(event);" accept="image/*" />
+          <img id='uploadImage' style=" display: none;" />
+          <button style='display: none;' onclick="cancelImage();" id="cancel"><i
+              class='fas fa-times-circle'></i></button>
+        </div>
+        <button class="btn btn-primary" id="sendMessage" onclick="sendMessage()" disabled
+          style="background-color: rgba(00, 123, 255, 0.2);">Send</button>
         <!-- <label for="audioSource">Audio:</label><select id="audioSource"></select>
         <label for="videoSource">Video:</label><select id="videoSource"></select> -->
         <!-- <button class="btn btn-primary" onclick="sendStream();">Send AV</button>
@@ -52,12 +68,14 @@
     <!-- /#sidebar-wrapper -->
 
     <!-- Page Content -->
-    <div id="page-content-wrapper" class="bg-dark">
+    <div id="page-content-wrapper" class="bg-transparent">
 
-      <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom notification">
+      <nav class="navbar navbar-expand-lg navbar-transparent bg-transparent border-bottom notification">
         <span class=" badge" id="badge">0</span>
-        <button class="btn btn-primary" id="menu-toggle" onclick="removeUnreadCount();"
-          style="background-color: #333333;  color: #ffffff;">Toggle Menu</button>
+        <button class="btn btn-primary" data-toggle="collapse" data-target="#sidebar-wrapper" id="menu-toggle"
+          onclick="removeUnreadCount();"
+          style="background-color: rgba(00, 123, 255, 0.2);     top : 0; left : 40vw; z-index: 10; position: fixed;">Toggle
+          Menu</button>
 
         <!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
           aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,12 +96,22 @@
         <div class="row" id="avi" style="1px solid #333333;">
         </div>
         <div class="row" style="1px solid #333333;">
-          <div class="col" id="localDiv"> <video autoplay id="local" muted></video></div>
+          <div class="col container" id="localDiv">
+            <video autoplay id="local" muted></video>
+            <div class="overlay">
+              <button style='font-size:24px;color:red;background-color: Transparent;outline:none;'
+                onclick="stopVideo();"><i class='fas fa-video' id="stop"></i></button>
+              <button style='font-size:24px;color:red;background-color: Transparent;outline:none;'
+                onclick="muteMe();"><i class='fas fa-microphone-alt' id="mute"></i></button>
+              </a>
+            </div>
+          </div>
         </div>
-
       </div>
+
     </div>
-    <!-- /#page-content-wrapper -->
+  </div>
+  <!-- /#page-content-wrapper -->
   </div>
   <!-- /#wrapper -->
 
@@ -91,17 +119,18 @@
   <script src={{ static_url("vendor/bootstrap/js/bootstrap.js") }}></script>
 
   <!-- Menu Toggle Script -->
-  <script>
-    $("#menu-toggle").click(function (e) {
-      e.preventDefault();
-      $("#wrapper").toggleClass("toggled");
-    });
-  </script>
+
   <script src={{ static_url("js/emojiPicker.js") }}></script>
   <script>
     (() => {
       new EmojiPicker()
     })()
+    $("#textMessage").keypress(function (e) {
+      if (e.which == 13 && !e.shiftKey) {
+        sendMessage();
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 

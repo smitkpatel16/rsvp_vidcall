@@ -2,15 +2,11 @@
 var chatSocket = null;
 var chatId = null;
 var personName = null;
-var audioSelect = null;
-var videoSelect = null;
 var videoElement = null;
 var localStream = null;
 var personID = null;
 var peers = {};
-var sendAudio = false;
-var sendVideo = false;
-var sendAV = true;
+var image = null;
 var inboundStreams = {};
 const offerOptions = {
   offerToReceiveAudio: 1,
@@ -24,15 +20,15 @@ var peerConnectionConfig = {
       credential: "webrtcdemo"
     },
     {
-      'urls': 'stun:stun.l.google.com:19302'
+      urls: 'stun:stun.l.google.com:19302'
     },
     {
-      'urls': 'stun:rsvplightsail.in:3478'
+      urls: 'stun:rsvplightsail.in:3478'
     },
     {
-      "urls": "turn:rsvplightsail.in:3478",
-      "username": "test",
-      "credential": "test123"
+      urls: "turn:rsvplightsail.in:3478",
+      username: "test",
+      credential: "test123"
     }
   ]
 };
@@ -41,9 +37,6 @@ var IceCandidate = window.RTCIceCandidate || window.RTCIceCandidate;
 var SessionDescription = window.RTCSessionDescription || window.RTCSessionDescription;
 navigator.getUserMedia = navigator.getUserMedia || navigator.mediaDevices.getUserMedia || navigator.webkitGetUserMedia;
 
-function handleError(error) {
-  console.error('Error: ', error);
-}
 function getChatID() {
   var url_string = window.location.href;
   var u = new URL(url_string);
@@ -74,10 +67,8 @@ function joinChat() {
     if (chatSocket) {
       chatSocket.close();
     }
-    // audioSelect = document.querySelector('select#audioSource');
-    // videoSelect = document.querySelector('select#videoSource');
     window.history.pushState("", "", location.protocol + '//' + location.host + location.pathname + "?id=" + chatId);
-    var wsURL = "wss://" + window.location.host + "/chatsocket";
+    var wsURL = "ws://" + window.location.host + "/chatsocket";
     console.log(window.location.host);
     chatSocket = new WebSocket(wsURL);
     chatSocket.onopen = function (evt) { onOpen(evt) };
@@ -102,16 +93,19 @@ function joinChat() {
 
   }
 }
+
 function sendMessage() {
   var el = document.getElementById("textMessage");
-  if (el.value.trim()) {
+  if (el.value.trim() || image) {
     var obj = {};
     obj['chatID'] = chatId;
     obj['personName'] = personName;
     obj['messageType'] = 'text';
+    obj['image'] = image;
     obj['message'] = el.value.trim();
     chatSocket.send(JSON.stringify(obj));
     el.value = "";
+    cancelImage();
   }
   else {
     alert("Please enter a message");
@@ -122,11 +116,6 @@ function onOpen(evt) {
   el.removeAttribute("disabled");
   el = document.getElementById("sendMessage");
   el.removeAttribute("disabled");
-  // el = document.getElementById("mute");
-  // el.removeAttribute("disabled");
-  // audioSelect.onchange = getStream;
-  // videoSelect.onchange = getStream;
-  // getStream().then(getDevices).then(gotDevices);
   var obj = {};
   obj['joinChat'] = chatId;
   obj['personName'] = personName
@@ -144,8 +133,6 @@ function stopAVI() {
 }
 
 function getStream() {
-  // const audioSource = audioSelect.value;
-  // const videoSource = videoSelect.value;
   const constraints = {
     audio: true,
     video: true
@@ -153,8 +140,8 @@ function getStream() {
   return navigator.mediaDevices.getUserMedia(constraints);
 }
 function updateUnreadCount() {
-  var str = document.getElementById("wrapper");
-  if (!str.className.includes("toggled")) {
+  var str = document.getElementById("sidebar-wrapper");
+  if (!str.className.includes("show")) {
     var badge = document.getElementById("badge");
     var badgeCount = parseInt(badge.innerHTML);
     badgeCount = badgeCount + 1;
@@ -213,6 +200,31 @@ function onError(evt) {
 function onClose(evt) {
   console.log("Chat Closed");
 }
+function cancelImage() {
+  var output = document.getElementById('uploadImage');
+  var cancel = document.getElementById('cancel');
+  image = null;
+  $('#uploadImage').val('');
+  output.style = "display: none;"
+  cancel.style = "display: none;"
+
+}
+var openImage = function (file) {
+  var input = file.target;
+
+  var reader = new FileReader();
+  reader.onload = function () {
+    var dataURL = reader.result;
+    var output = document.getElementById('uploadImage');
+    var cancel = document.getElementById('cancel');
+    $("#file-input").val(null);
+    output.src = dataURL;
+    image = dataURL;
+    output.style = "height:100px; width:100px;"
+    cancel.style = "font-size:24px;color:red;background-color: Transparent;outline:none;"
+  };
+  reader.readAsDataURL(input.files[0]);
+};
 async function handleConference(messageStream) {
   var dataObj = JSON.parse(messageStream);
   if (dataObj['messageType'] == 'text') {
@@ -220,13 +232,18 @@ async function handleConference(messageStream) {
     var div = document.createElement("div");
     var b = document.createElement("b");
     var pre = document.createElement("pre");
-    div.className = "btn-dark";
-    div.style = "border: 1px solid #eeeeee; margin-top: 2px;";
+    div.style = "border: 1px solid #eeeeee; background-color:rgba(00,00, 00, 0.3); color: #fff;";
     b.innerHTML = dataObj['messagePersonName'];
     pre.innerHTML = dataObj["message"];
-    pre.style = "margin-bottom: 0;"
-    pre.className = "btn-dark";
+    pre.style = "margin-bottom: 0; background-color:rgba(00,00, 00, 0.3); color: #fff;"
     div.append(b);
+    if (dataObj["image"]) {
+      var img = document.createElement("img");
+      div.style = "border: 1px solid #eeeeee; background-color:rgba(00,00, 00, 0.3); color: #fff;";
+      img.src = dataObj["image"];
+      img.style = "width=90vw"
+      div.append(img);
+    }
     div.append(pre);
     txtBlock.append(div);
     txtBlock.scrollTop = txtBlock.scrollHeight;
@@ -234,20 +251,57 @@ async function handleConference(messageStream) {
   }
   if (dataObj['messageType'] == 'init') {
     var el = document.getElementById("peopleInChat");
-    el.innerHTML = dataObj['people'];
+    while (el.firstChild) {
+      el.removeChild(el.lastChild)
+    }
+    for (var person of dataObj['people']) {
+      var div = document.createElement("div");
+      div.innerHTML = person;
+      el.appendChild(div);
+    }
     personID = dataObj['id'];
     if (dataObj['lastPeer'] != personID) {
       peers[dataObj['lastPeer']] = await newPeerConnection(dataObj['lastPeer']);
       await createPeerOffer(dataObj['lastPeer']);
     }
   }
+  if (dataObj["messageType"] == "pause") {
+    var el = document.getElementById(dataObj["peerId"]);
+    if (dataObj["enabled"]) {
+      if (dataObj["peerId"].includes("mute")) {
+        el.className = "fas fa-microphone-alt";
+      }
+      else {
+        el.className = "fas fa-video";
+      }
+    }
+    else {
+      if (dataObj["peerId"].includes("mute")) {
+        el.className = "fas fa-microphone-alt-slash";
+      }
+      else {
+        el.className = "fas fa-video-slash";
+      }
+    }
+  }
   if (dataObj['messageType'] == 'remove') {
     if (dataObj['peerId'] in peers) {
       delete peers[dataObj['peerId']];
+      delete inboundStreams[dataObj['peerId']]
+      var el = document.getElementById("peopleInChat");
+      while (el.firstChild) {
+        el.removeChild(el.lastChild)
+      }
+      for (var person of dataObj['people']) {
+        var div = document.createElement("div");
+        div.innerHTML = person;
+        el.appendChild(div);
+      }
       var element = document.getElementById(dataObj['peerId']);
       element.parentNode.removeChild(element);
       element = document.getElementById(dataObj['peerId'] + "div");
       element.parentNode.removeChild(element);
+      adjustPeerVidDisplay();
     }
   }
   if (dataObj['messageType'] == 'offer') {
@@ -274,16 +328,63 @@ function fail() {
   console.log("Failed");
 }
 
+function adjustPeerVidDisplay() {
+  var aviDiv = document.getElementById("avi");
+  var classNames = [];
+  switch (aviDiv.children.length) {
+    case 1:
+      classNames = ["col-12"];
+      break;
+    case 2:
+      classNames = ["col-6", "col-6"];
+      break;
+    case 3:
+      classNames = ["col-6", "col-6", "col-12"];
+      break;
+    case 4:
+      classNames = ["col-6", "col-6", "col-6", "col-6"];
+      break;
+    case 5:
+      classNames = ["col-4", "col-4", "col-4", "col-6", "col-6"];
+      break;
+    default:
+      for (var i = 0; i < aviDiv.children.length; i++) {
+        classNames.push("col-4");
+      }
+  }
+  for (var i = 0; i < aviDiv.children.length; i++) {
+    aviDiv.children[i].className = classNames[i];
+  }
+}
+
 function addPeerVid(peerId) {
   var div = document.createElement("div");
-  div.setAttribute("id", peerId + "div");
   var vidElement = document.createElement("video");
-  vidElement.setAttribute("id", peerId);
-  div.className = "col";
   var aviDiv = document.getElementById("avi");
+  var ivid = document.createElement("i");
+  var iaud = document.createElement("i");
+  var smallDiv = document.createElement("div");
+
+  div.setAttribute("id", peerId + "div");
   div.appendChild(vidElement);
   aviDiv.appendChild(div);
+
+  adjustPeerVidDisplay();
+  vidElement.setAttribute("id", peerId);
   vidElement.autoplay = true;
+
+  ivid.className = "fas fa-video";
+  ivid.style = "font-size:24px;color:red;";
+  ivid.setAttribute("id", peerId + "stop");
+
+  iaud.className = "fas fa-microphone-alt";
+  iaud.style = "font-size:24px;color:red;";
+  iaud.setAttribute("id", peerId + "mute");
+
+  smallDiv.appendChild(ivid);
+  smallDiv.appendChild(iaud);
+  div.appendChild(smallDiv);
+  smallDiv.className = "overlayshow";
 }
 
 async function newPeerConnection(peerId) {
@@ -405,23 +506,43 @@ async function receiveAnswer(peerAnswer) {
 function muteMe() {
   if (localStream) {
     localStream.getAudioTracks().forEach(track => {
-      track.enabled = false;
+      track.enabled = !track.enabled;
     });
   }
   var el = document.getElementById("mute");
-  el.onclick = unMuteMe;
-  el.innerHTML = "Un Mute";
+  var obj = {}
+  obj["chatID"] = chatId;
+  obj["peerId"] = personID + "mute";
+  obj["enabled"] = localStream.getAudioTracks()[0].enabled;
+  obj["messageType"] = "pause";
+  if (!localStream.getAudioTracks()[0].enabled) {
+    el.className = "fas fa-microphone-alt-slash";
+  }
+  else {
+    el.className = "fas fa-microphone-alt";
+  }
+  chatSocket.send(JSON.stringify(obj));
 }
 
-function unMuteMe() {
+function stopVideo() {
   if (localStream) {
-    localStream.getAudioTracks().forEach(track => {
-      track.enabled = true;
+    localStream.getVideoTracks().forEach(track => {
+      track.enabled = !track.enabled;
     });
   }
-  var el = document.getElementById("mute");
-  el.onclick = muteMe;
-  el.innerHTML = "Mute";
+  var obj = {}
+  obj["chatID"] = chatId;
+  obj["peerId"] = personID + "stop";
+  obj["enabled"] = localStream.getVideoTracks()[0].enabled;
+  obj["messageType"] = "pause";
+  var el = document.getElementById("stop");
+  if (!localStream.getVideoTracks()[0].enabled) {
+    el.className = "fas fa-video-slash";
+  }
+  else {
+    el.className = "fas fa-video";
+  }
+  chatSocket.send(JSON.stringify(obj));
 }
 
 async function negotiate(event) {

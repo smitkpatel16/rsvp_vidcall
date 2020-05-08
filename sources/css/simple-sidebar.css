@@ -5,22 +5,54 @@
  */
 body {
   overflow-x: hidden;
+  background-image: url("/static/images/bglarge.jpg");
   background-repeat: no-repeat;
   background-size: cover;
-  background-image: url("/static/images/bglarge.jpg");
-  background-color: #333333;  
 }
 
 #sidebar-wrapper {
-  min-height: 100vh;
-  margin-left: -15rem;
+  resize: both;  
+  /* min-height: 100vh; */
+  /* min-width: 240px; */
+  width: 100vw;
   padding: 0px 0px 0px 10px;
-  -webkit-transition: margin .25s ease-out;
-  -moz-transition: margin .25s ease-out;
-  -o-transition: margin .25s ease-out;
-  transition: margin .25s ease-out;
+  border: 1px solid #333333;
   background-color: #111;
+  overflow: auto;
+  z-index: 5;
+  position: fixed;
 }
+.image-upload>input {
+  display: none;
+}
+.msgimg>img {
+max-width: 100%;
+}
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  /* height: 10%; */
+  width: 100%;
+  opacity: 0;
+  transition: .3s ease;
+}
+
+.container:hover .overlay {
+  opacity: 1;
+}
+
+.overlayshow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  /* height: 10%; */
+  width: 100%;
+  opacity: 1;
+  transition: .3s ease;
+}
+
+
 .notification .badge {
   position: relative;
   top: -10px;
@@ -35,12 +67,13 @@ body {
   font-size: 1.2rem;
 }
 
-#sidebar-wrapper .list-group {
+/* #sidebar-wrapper .list-group {
   width: 15rem;
-}
+} */
 
 #page-content-wrapper {
   min-width: 100vw;
+
 }
 
 #wrapper.toggled #sidebar-wrapper {
@@ -61,11 +94,21 @@ body {
     margin-left: -15rem;
   }
 }
+pre {
+  white-space: pre-wrap;       /* Since CSS 2.1 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+input {
+  background-color: rgba(00, 123, 255, 0.4);
+}
 video {
   width: 320px;
   height: 240px;
   max-width: 100%;  
-  background-color: #111;
+  background-color:rgba(00,00, 00, 0.3);
   transform: rotateY(180deg);
   -webkit-transform:rotateY(180deg); /* Safari and Chrome */
   -moz-transform:rotateY(180deg); /* Firefox */

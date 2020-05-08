@@ -20,10 +20,11 @@ class MainHandler(tornado.web.RequestHandler):
         # if self.request.protocol == 'http':
         #     self.redirect('https://' + self.request.host, permanent=True)
 
-
 # ===============================================================================
 # HomePage- Default homepage for hello
 # ===============================================================================
+
+
 class HomePage(MainHandler):
     def get(self):
         self.render("sources/index.html")
@@ -65,6 +66,7 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                                           'id': connection._id,
                                           'messageType': 'init'})
         else:
+            # this is imperative without this we do not know which room to control
             if data.get('chatID'):
                 if data.get("messageType") == "text":
                     logger.info("{} messaged the {} chatroom".format(self._name,
@@ -76,8 +78,14 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                                                   'messageType':
                                                   data.get("messageType"),
                                                   'message':
-                                                  data.get('message')
+                                                  data.get('message'),
+                                                  'image':
+                                                  data.get('image')
                                                   })
+                if data.get("messageType") == "pause":
+                    for connection in self._ROOMCONNECTIONS[data.get('chatID')]:
+                        if connection != self:
+                            connection.write_message(data)
                 if data.get("messageType") == "offer":
                     for connection in self._ROOMCONNECTIONS[data.get('chatID')]:
                         if connection._id == data.get("peerId"):
@@ -132,17 +140,16 @@ class ChatRoomSocket(tornado.websocket.WebSocketHandler):
                 count = len(self._ROOMCONNECTIONS[chatID])
                 people = [c._name for c in self._ROOMCONNECTIONS[chatID]]
                 for connection in self._ROOMCONNECTIONS[chatID]:
-                    connection.write_message({'count': count,
-                                              'people': people,
-                                              'messageType': 'init'})
                     connection.write_message({'peerId': self._id,
                                               'messageType': 'remove',
+                                              'people': people,
                                               'count': count})
-
 
 # ===============================================================================
 # Chat- Main page to connect chat rooms
 # ===============================================================================
+
+
 class Chat(MainHandler):
     def get(self):
         self.render("sources/chatRoom2.html")
