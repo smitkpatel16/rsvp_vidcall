@@ -140,7 +140,7 @@ function getStream() {
   return navigator.mediaDevices.getUserMedia(constraints);
 }
 function updateUnreadCount() {
-  var str = document.getElementById("sidebar-wrapper");
+  var str = document.getElementById("myModal2");
   if (!str.className.includes("show")) {
     var badge = document.getElementById("badge");
     var badgeCount = parseInt(badge.innerHTML);

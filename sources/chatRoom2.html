@@ -20,106 +20,124 @@
   <script src='https://kit.fontawesome.com/a076d05399.js'></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <!-- Custom styles for this template -->
-  <link href={{ static_url("css/simple-sidebar.css") }} rel="stylesheet">
+  <link href={{ static_url("css/custom.css") }} rel="stylesheet">
   <script src={{ static_url("js/adapter.js") }}></script>
   <script src={{ static_url("js/chatroom.js") }}></script>
 
 </head>
 
 <body>
-
-  <div class="d-flex" id="wrapper">
-
-    <!-- Sidebar -->
-    <div class="bg-transparent border-transparent collapse show" id="sidebar-wrapper">
-      <div class="sidebar-heading btn-transparent">RSVP Chat </div>
-      <div class="list-group list-group-flush bg-transparent">
-        <label for="personName" class="btn-transparent">&nbsp;Name:</label>
-        <input name="personName" class="btn-transparent" id="personName" type="text" label="Name: " value="" size=20 />
-        <label for="chatID" class="btn-transparent">&nbsp;Chat ID:</label>
-        <input name="chatID" class="btn-transparent" id="chatID" type="text" value="" size=20 />
-        <button class=" btn btn-primary" data-toggle="collapse" data-target="#sidebar-wrapper" onclick="joinChat();"
-          style="background-color: rgba(00, 123, 255, 0.2);">&nbsp;&nbsp;Join</button>
-        <div id="peopleInChat" class="btn-transparent"></div>
-        <div id="chatMessages" style="height: 50vh; overflow-y: auto; border: 1px solid #333333; padding: 10px;"
-          class="btn-transparent">
-        </div>
-        <textarea id="textMessage" data-emoji-picker="true" disabled class="btn-transparent"
-          style="background-color:rgba(00,00, 00, 0.3);"></textarea>
-        <div class="image-upload">
-          <label for="file-input">
-            <i class="fas fa-image" style="font-size:48px;color:black;" alt="Upload Image" title="Upload Image"></i>
-          </label>
-
-          <input id="file-input" type="file" onchange="openImage(event);" accept="image/*" />
-          <img id='uploadImage' style=" display: none;" />
-          <button style='display: none;' onclick="cancelImage();" id="cancel"><i
-              class='fas fa-times-circle'></i></button>
-        </div>
-        <button class="btn btn-primary" id="sendMessage" onclick="sendMessage()" disabled
-          style="background-color: rgba(00, 123, 255, 0.2);">Send</button>
-        <!-- <label for="audioSource">Audio:</label><select id="audioSource"></select>
-        <label for="videoSource">Video:</label><select id="videoSource"></select> -->
-        <!-- <button class="btn btn-primary" onclick="sendStream();">Send AV</button>
-        <button class="btn btn-primary" onclick="stopAVI();">Stop AV</button>
-        <button class="btn btn-primary" onclick="muteMe();" id="mute" disabled>Mute</button> -->
+  <div class="container">
+    <!-- <h2>Modal Example</h2> -->
+    <!-- Trigger the modal with a button -->
+    <div class="row">
+      <div class="col-4">
+        <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal1"
+          style="background-color: rgba(179, 232, 225, 0.2);">Toggle
+          Menu</button>
+        <span class=" badge" id="badge">0</span>
+      </div>
+      <div class="col-4">
+        <button type=" button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal2"
+          onclick="removeUnreadCount();" style="background-color: rgba(179, 232, 225, 0.2);">Toggle
+          Chat</button>
+      </div>
+      <div class="col-4">
+        <spa><a class="btn btn-info btn-lg" style="background-color: rgba(179, 232, 225, 0.2);" href="/"
+            onclick="closeChat();">
+            <i class='fas fa-times-circle'
+              style="font-size:24px;color:red;background-color: Transparent;outline:none;"></i>
+          </a></span>
       </div>
     </div>
-    <!-- /#sidebar-wrapper -->
+    <!-- Modal -->
+    <div class="modal" id="myModal1" role="dialog">
+      <div class="modal-dialog modal-dialog modal-xl">
+        <!-- Modal content-->
+        <div class="modal-content" style="background-color: rgba(179, 232, 225, 0.2);">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">RSVP Chat</h4>
+          </div>
+          <div class="modal-body">
+            <div class="list-group list-group-flush bg-transparent">
+              <label for="personName" class="btn-transparent">&nbsp;Name:</label>
+              <input name="personName" class="btn-transparent" id="personName" type="text" label="Name: " value=""
+                size=20 />
+              <label for="chatID" class="btn-transparent">&nbsp;Chat ID:</label>
+              <input name="chatID" class="btn-transparent" id="chatID" type="text" value="" size=20 />
+              <button class=" btn btn-primary" onclick="joinChat();" data-dismiss="modal"
+                style="background-color: rgba(00, 123, 255, 0.2);">&nbsp;&nbsp;Join</button>
+              <div id="peopleInChat" class="btn-transparent"></div>
 
-    <!-- Page Content -->
-    <div id="page-content-wrapper" class="bg-transparent">
-
-      <nav class="navbar navbar-expand-lg navbar-transparent bg-transparent border-bottom notification">
-        <span class=" badge" id="badge">0</span>
-        <button class="btn btn-primary" data-toggle="collapse" data-target="#sidebar-wrapper" id="menu-toggle"
-          onclick="removeUnreadCount();"
-          style="background-color: rgba(00, 123, 255, 0.2);     top : 0; left : 40vw; z-index: 10; position: fixed;">Toggle
-          Menu</button>
-
-        <!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-
-        </button> -->
-        <a class="nav-link" href="https://www.rsvplightsail.in" onclick="closeChat();">Exit</a>
-        <!-- <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
-            <li class="nav-item active">
-
-            </li>
-          </ul>
-        </div> -->
-      </nav>
-
-      <div class="container-fluid">
-        <div class="row" id="avi" style="1px solid #333333;">
-        </div>
-        <div class="row" style="1px solid #333333;">
-          <div class="col container" id="localDiv">
-            <video autoplay id="local" muted></video>
-            <div class="overlay">
-              <button style='font-size:24px;color:red;background-color: Transparent;outline:none;'
-                onclick="stopVideo();"><i class='fas fa-video' id="stop"></i></button>
-              <button style='font-size:24px;color:red;background-color: Transparent;outline:none;'
-                onclick="muteMe();"><i class='fas fa-microphone-alt' id="mute"></i></button>
-              </a>
+              <!-- <label for="audioSource">Audio:</label><select id="audioSource"></select>
+                  <label for="videoSource">Video:</label><select id="videoSource"></select> -->
+              <!-- <button class="btn btn-primary" onclick="sendStream();">Send AV</button>
+                  <button class="btn btn-primary" onclick="stopAVI();">Stop AV</button>
+                  <button class="btn btn-primary" onclick="muteMe();" id="mute" disabled>Mute</button> -->
             </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal" id="myModal2" role="dialog">
+      <div class="modal-dialog modal-dialog modal-xl">
+        <!-- Modal content-->
+        <div class="modal-content" style="background-color: rgba(179, 232, 225, 0.2);">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">RSVP Chat</h4>
+          </div>
+          <div class="modal-body">
+            <div id="chatMessages" style="height: 50vh; overflow-y: auto; border: 1px solid #333333; padding: 10px;"
+              class="btn-transparent">
+            </div>
+            <textarea id="textMessage" data-emoji-picker="true" disabled class="btn-transparent"
+              style="background-color:rgba(00,00, 00, 0.3);"></textarea>
+            <div class="image-upload">
+              <label for="file-input">
+                <i class="fas fa-image" style="font-size:48px;color:black;" alt="Upload Image" title="Upload Image"></i>
+              </label>
+
+              <input id="file-input" type="file" onchange="openImage(event);" accept="image/*" />
+              <img id='uploadImage' style=" display: none;" />
+              <button style='display: none;' onclick="cancelImage();" id="cancel"><i
+                  class='fas fa-times-circle'></i></button>
+            </div>
+            <button class="btn btn-primary" id="sendMessage" onclick="sendMessage()" disabled
+              style="background-color: rgba(00, 123, 255, 0.2);">Send</button>
           </div>
         </div>
       </div>
-
     </div>
   </div>
-  <!-- /#page-content-wrapper -->
-  </div>
-  <!-- /#wrapper -->
 
+
+  <div class="container-fluid">
+    <div class="row" id="avi" style="1px solid #333333;">
+    </div>
+    <div class="row" style="1px solid #333333;">
+      <div class="col container" id="localDiv">
+        <video autoplay id="local" muted width="320px" height="240px"></video>
+        <div class="overlay">
+          <button style='font-size:24px;color:red;background-color: Transparent;outline:none;' onclick="stopVideo();"><i
+              class='fas fa-video' id="stop"></i></button>
+          <button style='font-size:24px;color:red;background-color: Transparent;outline:none;' onclick="muteMe();"><i
+              class='fas fa-microphone-alt' id="mute"></i></button>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
   <!-- Bootstrap core JavaScript -->
   <script src={{ static_url("vendor/bootstrap/js/bootstrap.js") }}></script>
-
   <!-- Menu Toggle Script -->
-
   <script src={{ static_url("js/emojiPicker.js") }}></script>
   <script>
     (() => {
@@ -131,6 +149,9 @@
         e.preventDefault();
       }
     });
+    $(window).on('load', function () {
+      $('#myModal1').modal('show');
+    });    
   </script>
 </body>
 

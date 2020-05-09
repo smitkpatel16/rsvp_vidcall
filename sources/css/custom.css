@@ -4,10 +4,9 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-simple-sidebar/blob/master/LICENSE)
  */
 body {
-  overflow-x: hidden;
   background-image: url("/static/images/bglarge.jpg");
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: auto;
 }
 
 #sidebar-wrapper {
@@ -15,6 +14,8 @@ body {
   /* min-height: 100vh; */
   /* min-width: 240px; */
   width: 100vw;
+  height: 70vh;
+  top: 20vh;
   padding: 0px 0px 0px 10px;
   border: 1px solid #333333;
   background-color: #111;
@@ -105,8 +106,8 @@ input {
   background-color: rgba(00, 123, 255, 0.4);
 }
 video {
-  width: 320px;
-  height: 240px;
+  /* width: 320px;
+  height: 240px; */
   max-width: 100%;  
   background-color:rgba(00,00, 00, 0.3);
   transform: rotateY(180deg);
