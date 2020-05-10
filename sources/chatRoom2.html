@@ -33,21 +33,19 @@
     <div class="row">
       <div class="col-4">
         <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal1"
-          style="background-color: rgba(179, 232, 225, 0.2);">Toggle
-          Menu</button>
+          style="background-color: rgba(79, 132, 125, 0.8);">Menu</button>
+      </div>
+      <div class="col-4 notification">
+        <button type=" button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal2"
+          onclick="removeUnreadCount();" style="background-color: rgba(79, 132, 125, 0.8);">Chat</button>
         <span class=" badge" id="badge">0</span>
       </div>
       <div class="col-4">
-        <button type=" button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal2"
-          onclick="removeUnreadCount();" style="background-color: rgba(179, 232, 225, 0.2);">Toggle
-          Chat</button>
-      </div>
-      <div class="col-4">
-        <spa><a class="btn btn-info btn-lg" style="background-color: rgba(179, 232, 225, 0.2);" href="/"
+        <spa><a class="btn btn-info btn-lg" style="background-color: rgba(79, 132, 125, 0.8);" href="/"
             onclick="closeChat();">
             <i class='fas fa-times-circle'
               style="font-size:24px;color:red;background-color: Transparent;outline:none;"></i>
-          </a></span>
+            Exit</a></span>
       </div>
     </div>
     <!-- Modal -->
@@ -56,7 +54,9 @@
         <!-- Modal content-->
         <div class="modal-content" style="background-color: rgba(179, 232, 225, 0.2);">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <button type="button" class="close"
+              style="font-size:24px;color:red;background-color: Transparent;outline:none;" data-dismiss="modal"><i
+                class='fas fa-times-circle'></i></button>
             <h4 class="modal-title">RSVP Chat</h4>
           </div>
           <div class="modal-body">
@@ -78,7 +78,9 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="close"
+              style="font-size:24px;color:red;background-color: Transparent;outline:none;" data-dismiss="modal"><i
+                class='fas fa-times-circle'></i></button>
           </div>
         </div>
 
@@ -89,7 +91,9 @@
         <!-- Modal content-->
         <div class="modal-content" style="background-color: rgba(179, 232, 225, 0.2);">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <button type="button" class="close"
+              style="font-size:24px;color:red;background-color: Transparent;outline:none;" data-dismiss="modal"><i
+                class='fas fa-times-circle'></i></button>
             <h4 class="modal-title">RSVP Chat</h4>
           </div>
           <div class="modal-body">
@@ -97,7 +101,7 @@
               class="btn-transparent">
             </div>
             <textarea id="textMessage" data-emoji-picker="true" disabled class="btn-transparent"
-              style="background-color:rgba(00,00, 00, 0.3);"></textarea>
+              style="background-color:rgba(00,00, 00, 0.3); color: #fff;"></textarea>
             <div class="image-upload">
               <label for="file-input">
                 <i class="fas fa-image" style="font-size:48px;color:black;" alt="Upload Image" title="Upload Image"></i>
@@ -107,9 +111,14 @@
               <img id='uploadImage' style=" display: none;" />
               <button style='display: none;' onclick="cancelImage();" id="cancel"><i
                   class='fas fa-times-circle'></i></button>
+              <button class="btn btn-primary" id="sendMessage" onclick="sendMessage()" disabled
+                style="background-color: rgba(00, 123, 255, 0.2);">Send</button>
             </div>
-            <button class="btn btn-primary" id="sendMessage" onclick="sendMessage()" disabled
-              style="background-color: rgba(00, 123, 255, 0.2);">Send</button>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="close"
+              style="font-size:24px;color:red;background-color: Transparent;outline:none;" data-dismiss="modal"><i
+                class='fas fa-times-circle'></i></button>
           </div>
         </div>
       </div>
@@ -122,7 +131,7 @@
     </div>
     <div class="row" style="1px solid #333333;">
       <div class="col container" id="localDiv">
-        <video autoplay id="local" muted width="320px" height="240px"></video>
+        <video autoplay id="local" muted></video>
         <div class="overlay">
           <button style='font-size:24px;color:red;background-color: Transparent;outline:none;' onclick="stopVideo();"><i
               class='fas fa-video' id="stop"></i></button>

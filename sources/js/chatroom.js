@@ -35,16 +35,17 @@ var peerConnectionConfig = {
 var PeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection;
 var IceCandidate = window.RTCIceCandidate || window.RTCIceCandidate;
 var SessionDescription = window.RTCSessionDescription || window.RTCSessionDescription;
-navigator.getUserMedia = navigator.getUserMedia || navigator.mediaDevices.getUserMedia || navigator.webkitGetUserMedia;
 
-function getChatID() {
+
+async function getChatID() {
   var url_string = window.location.href;
   var u = new URL(url_string);
   var c = u.searchParams.get("id");
   var el = document.getElementById("chatID");
   el.value = c;
+
   // getDevices().then(gotDevices);
-  joinAVI();
+  await joinAVI();
 }
 function chatCollapse() {
   showStyle = "height: 50vh; overflow-y: scroll; border: 1px solid #333333;"
@@ -68,8 +69,8 @@ function joinChat() {
       chatSocket.close();
     }
     window.history.pushState("", "", location.protocol + '//' + location.host + location.pathname + "?id=" + chatId);
-    var wsURL = "ws://" + window.location.host + "/chatsocket";
-    console.log(window.location.host);
+    var wsURL = "wss://" + window.location.host + "/chatsocket";
+    // console.log(window.location.host);
     chatSocket = new WebSocket(wsURL);
     chatSocket.onopen = function (evt) { onOpen(evt) };
     chatSocket.onclose = function (evt) { onClose(evt) };
@@ -121,9 +122,34 @@ function onOpen(evt) {
   obj['personName'] = personName
   chatSocket.send(JSON.stringify(obj));
 }
-function joinAVI() {
+async function getStream() {
+  const constraints = {
+    // audio: true,
+    // video: true
+    audio: {
+      sampleSize: 16,
+      channelCount: 2,
+      echoCancellation: true,
+      noiseSuppression: true
+    },
+    video: {
+      width: 320,
+      height: 240,
+      frameRate: 10,
+      facingMode: "user"
+    }
+  };
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia(constraints);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function joinAVI() {
   videoElement = document.getElementById('local');
-  getStream().then(gotStream);
+  await getStream();
+  await gotStream();
 }
 
 function stopAVI() {
@@ -132,13 +158,7 @@ function stopAVI() {
   });
 }
 
-function getStream() {
-  const constraints = {
-    audio: true,
-    video: true
-  };
-  return navigator.mediaDevices.getUserMedia(constraints);
-}
+
 function updateUnreadCount() {
   var str = document.getElementById("myModal2");
   if (!str.className.includes("show")) {
@@ -152,22 +172,25 @@ function removeUnreadCount() {
   var badge = document.getElementById("badge");
   badge.innerHTML = 0;
 }
-function gotStream(stream) {
+async function gotStream() {
   if (localStream) {
-    stopAVI();
+    videoElement.srcObject = localStream;
   }
-  localStream = stream; // make stream available to console
+  // localStream = stream; // make stream available to console
   // audioSelect.selectedIndex = [...audioSelect.options].
   //   findIndex(option => option.text === stream.getAudioTracks()[0].label);
   // videoSelect.selectedIndex = [...videoSelect.options].
   //   findIndex(option => option.text === stream.getVideoTracks()[0].label);
-  videoElement.srcObject = stream;
+
 }
 
 async function sendStream(peerId) {
   if (localStream) {
-    peers[peerId].getSenders().forEach(sender => { console.log("Removing track"); console.log(peers[peerId]); peers[peerId].removeTrack(sender); })
-    localStream.getTracks().forEach(track => { console.log("Adding track"); console.log(peers[peerId]); peers[peerId].addTrack(track); });
+    peers[peerId].getSenders().forEach(sender => { peers[peerId].removeTrack(sender); })
+    localStream.getTracks().forEach(track => { peers[peerId].addTrack(track, localStream); });
+  }
+  else {
+    console.log("No local stream found");
   }
 }
 
@@ -233,6 +256,7 @@ async function handleConference(messageStream) {
     var b = document.createElement("b");
     var pre = document.createElement("pre");
     div.style = "border: 1px solid #eeeeee; background-color:rgba(00,00, 00, 0.3); color: #fff;";
+    div.className = "chatimg"
     b.innerHTML = dataObj['messagePersonName'];
     pre.innerHTML = dataObj["message"];
     pre.style = "margin-bottom: 0; background-color:rgba(00,00, 00, 0.3); color: #fff;"
@@ -395,10 +419,30 @@ async function newPeerConnection(peerId) {
   tempPeer.mrsent = false;
   tempPeer.onicecandidate = iceCandidateNeg;
   tempPeer.onnegotiationneeded = negotiate;
+  tempPeer.onconnectionstatechange = connectionhandler;
   tempPeer.ontrack = function (event) {
     $('#' + peerId).attachTrack(event);
   }
   return tempPeer;
+}
+
+async function connectionhandler(event) {
+  if (peers[event.target.peerId]) {
+    console.log(peers[event.target.peerId].connectionState);
+    switch (peers[event.target.peerId].connectionState) {
+      case "connected":
+        // The connection has become fully connected
+        break;
+      case "disconnected":
+        break;
+      case "failed":
+        // One or more transports has terminated unexpectedly or in an error
+        break;
+      case "closed":
+        // The connection has been closed
+        break;
+    }
+  }
 }
 
 async function createPeerOffer(peerId) {
@@ -568,6 +612,7 @@ jQuery.fn.attachTrack = function (ev) {
     inboundStreams[this.id].addTrack(ev.track);
     console.log("Stream Added");
     this.srcObject = inboundStreams[this.id];
+    // this.play();
   });
 }
 window.addEventListener("load", getChatID, false);

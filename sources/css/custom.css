@@ -7,6 +7,7 @@ body {
   background-image: url("/static/images/bglarge.jpg");
   background-repeat: no-repeat;
   background-size: auto;
+  color: #fff;
 }
 
 #sidebar-wrapper {
@@ -52,7 +53,13 @@ max-width: 100%;
   opacity: 1;
   transition: .3s ease;
 }
-
+.chatimg {
+  display: block;
+}
+.chatimg img{
+   max-width: 100%; 
+   height: auto; 
+}
 
 .notification .badge {
   position: relative;
@@ -106,8 +113,8 @@ input {
   background-color: rgba(00, 123, 255, 0.4);
 }
 video {
-  /* width: 320px;
-  height: 240px; */
+  width: 320px;
+  height: 240px;
   max-width: 100%;  
   background-color:rgba(00,00, 00, 0.3);
   transform: rotateY(180deg);
